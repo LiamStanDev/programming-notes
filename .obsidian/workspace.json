@@ -4,16 +4,16 @@
     "type": "split",
     "children": [
       {
-        "id": "87bd8f08459caea4",
+        "id": "08697fddb5d18b0a",
         "type": "tabs",
         "children": [
           {
-            "id": "bba540a2ea5e6747",
+            "id": "5bf2a1d0992f421b",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/04-網路編程/01-Linux網路編程基礎.md",
+                "file": "1. Programing/AGENTS.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,7 +28,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "01-Linux網路編程基礎"
+              "title": "AGENTS"
             }
           }
         ]
@@ -191,8 +191,21 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "bba540a2ea5e6747",
+  "active": "5bf2a1d0992f421b",
   "lastOpenFiles": [
+    "1. Programing/02-languages/rust/03-併發與並行/01-原子操作與內存順序.md",
+    "1. Programing/02-languages/rust/02-高性能編程/03-內聯彙編與底層控制.md",
+    "1. Programing/02-languages/rust/02-高性能編程/04-緩存友好與數據局部性.md",
+    "1. Programing/02-languages/rust/02-高性能編程/02-SIMD向量化編程.md",
+    "1. Programing/02-languages/rust/02-高性能編程/01-零成本抽象與內聯優化.md",
+    "1. Programing/02-languages/rust/03-併發與並行/03-並行計算模式.md",
+    "1. Programing/02-languages/rust/03-併發與並行/02-線程間通信模式.md",
+    "1. Programing/02-languages/rust/04-異步編程/01-Future與Poll機制.md",
+    "1. Programing/02-languages/rust/01-進階語言特性/04-型別系統與零大小型別.md",
+    "1. Programing/02-languages/rust/01-進階語言特性/02-生命期進階技巧.md",
+    "1. Programing/02-languages/cpp/04-網路編程/04-Reactor與Proactor模式.md",
+    "1. Programing/02-languages/cpp/04-網路編程/02-epoll與io_uring詳解.md",
+    "1. Programing/02-languages/cpp/04-網路編程/01-Linux網路編程基礎.md",
     "1. Programing/02-languages/cpp/08-實戰模式/05-部署與運維.md",
     "1. Programing/02-languages/cpp/08-實戰模式/04-錯誤處理與可靠性.md",
     "1. Programing/02-languages/cpp/08-實戰模式/03-交易系統架構.md",
@@ -206,16 +219,9 @@
     "1. Programing/02-languages/cpp/06-工具鏈與調試/05-基準測試框架.md",
     "1. Programing/02-languages/cpp/06-工具鏈與調試/04-記憶體與並發檢測.md",
     "1. Programing/02-languages/cpp/06-工具鏈與調試/03-性能分析工具.md",
-    "1. Programing/02-languages/cpp/06-工具鏈與調試/02-編譯器標誌與優化.md",
-    "1. Programing/02-languages/cpp/06-工具鏈與調試/01-CMake構建系統.md",
     "1. Programing/02-languages/cpp/08-實戰模式",
     "1. Programing/02-languages/cpp/07-標準庫與第三方庫",
     "1. Programing/02-languages/cpp/06-工具鏈與調試",
-    "1. Programing/02-languages/cpp/05-系統編程/05-Linux特定優化技術.md",
-    "1. Programing/02-languages/cpp/05-系統編程/04-信號處理與異常安全.md",
-    "1. Programing/02-languages/cpp/05-系統編程/03-CPU親和性與調度.md",
-    "1. Programing/02-languages/cpp/05-系統編程/02-進程間通信_IPC.md",
-    "1. Programing/02-languages/cpp/05-系統編程/01-系統調用與性能.md",
     "1. Programing/02-languages/cpp/05-系統編程",
     "1. Programing/02-languages/rust/13-實戰項目",
     "1. Programing/02-languages/rust/12-嵌入式開發",
@@ -223,12 +229,6 @@
     "1. Programing/02-languages/rust/10-宏與元編程",
     "1. Programing/02-languages/rust/08-測試與品質保證",
     "1. Programing/02-languages/rust/07-錯誤處理與除錯",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/06-FFI與C語言互操作.md",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/05-內存模型與數據競爭.md",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/04-Pin與自引用結構.md",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/03-智能指針深度解析.md",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/02-自定義內存分配器.md",
-    "1. Programing/02-languages/rust/05-內存管理與不安全/01-Unsafe_Rust實戰.md",
     "z.attachment/Pasted image 20250920205158.png",
     "z.attachment/Pasted image 20250920202422.png",
     "z.attachment/screenshot-1751196676.png",
