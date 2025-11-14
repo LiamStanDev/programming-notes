@@ -212,6 +212,11 @@ echo 'net.core.wmem_max = 134217728' >> /etc/sysctl.conf
 
 ## 6. TCP 擁塞控制 (Congestion Control)
 
+擁塞控制用於避免過多資料同時進入網路，使路由器緩衝區塞滿，若沒有擁塞控制會導致：
+1. 封包丟失 （緩衝區溢出）
+2. 延遲上升
+3. 網路效能下降
+
 ### 6.1 擁塞控制算法
 
 ```mermaid
