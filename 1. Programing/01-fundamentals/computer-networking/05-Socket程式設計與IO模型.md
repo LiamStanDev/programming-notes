@@ -68,23 +68,25 @@ int create_tcp_server() {
     }
     
     // 2. 設置 socket 選項
+    // SO_REUSEADDR: 避免重啓時出現 "Address already in use"
     int opt = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt failed");
         return -1;
     }
     
-    // 3. 綁定地址
+    // 3. 綁定 IP 與 Port
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = INADDR_ANY; // 監聽所有網卡
+    server_addr.sin_port = htons(PORT); // 主機序轉爲網路序
     
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind failed");
         return -1;
     }
     
-    // 4. 監聽連接
+    // 4. 監聽連接, 最多 10 個連線
     if (listen(server_fd, 10) < 0) {
         perror("listen failed");
         return -1;
@@ -153,9 +155,10 @@ int create_tcp_client() {
     }
     
     // 2. 設置服務器地址
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) { // inet_pton 將字串 ip 轉爲網路用的二進制格式
         perror("Invalid address");
         return -1;
     }
