@@ -1,5 +1,5 @@
 {
-  "vimMode": true,
+  "vimMode": false,
   "trashOption": "local",
   "newFileLocation": "folder",
   "newFileFolderPath": "0.inbox",

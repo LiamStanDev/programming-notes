@@ -180,4 +180,387 @@ Rob Pike 的 Go Proverbs：
 
 ---
 
-待完整實現...
+## 7. 設計模式在 Go 中的實現
+
+### 7.1 單例模式
+
+```go
+var (
+    instance *Database
+    once     sync.Once
+)
+
+func GetDatabase() *Database {
+    once.Do(func() {
+        instance = &Database{
+            // 初始化
+        }
+    })
+    return instance
+}
+```
+
+### 7.2 工廠模式
+
+```go
+type Storage interface {
+    Save(key string, value interface{}) error
+}
+
+func NewStorage(storageType string) Storage {
+    switch storageType {
+    case "memory":
+        return &MemoryStorage{}
+    case "redis":
+        return &RedisStorage{}
+    default:
+        return &MemoryStorage{}
+    }
+}
+```
+
+### 7.3 選項模式
+
+```go
+type Server struct {
+    host string
+    port int
+    timeout time.Duration
+}
+
+type ServerOption func(*Server)
+
+func WithHost(host string) ServerOption {
+    return func(s *Server) {
+        s.host = host
+    }
+}
+
+func WithPort(port int) ServerOption {
+    return func(s *Server) {
+        s.port = port
+    }
+}
+
+func NewServer(opts ...ServerOption) *Server {
+    s := &Server{
+        host: "localhost",
+        port: 8080,
+        timeout: 30 * time.Second,
+    }
+    
+    for _, opt := range opts {
+        opt(s)
+    }
+    
+    return s
+}
+
+// 使用
+server := NewServer(
+    WithHost("0.0.0.0"),
+    WithPort(9000),
+)
+```
+
+---
+
+## 8. 代碼組織原則
+
+### 8.1 包的職責
+
+**✅ 好的包設計**：
+```go
+// package user - 只處理用戶相關邏輯
+package user
+
+type User struct { }
+type Repository interface { }
+type Service struct { }
+```
+
+**❌ 不好的包設計**：
+```go
+// package models - 包含所有模型（職責不清）
+package models
+
+type User struct { }
+type Post struct { }
+type Comment struct { }
+type Order struct { }
+```
+
+### 8.2 分層架構
+
+```
+項目/
+├── cmd/               # 應用入口
+│   └── server/
+│       └── main.go
+├── internal/          # 私有代碼
+│   ├── domain/       # 領域模型
+│   ├── repository/   # 數據訪問
+│   ├── service/      # 業務邏輯
+│   └── handler/      # HTTP 處理器
+├── pkg/              # 公共庫
+│   ├── logger/
+│   └── validator/
+└── config/           # 配置
+```
+
+---
+
+## 9. 性能優化原則
+
+### 9.1 避免不必要的內存分配
+
+```go
+// ❌ 每次都分配新的 slice
+func processItems(items []Item) []Result {
+    var results []Result
+    for _, item := range items {
+        results = append(results, process(item))
+    }
+    return results
+}
+
+// ✅ 預分配容量
+func processItems(items []Item) []Result {
+    results := make([]Result, 0, len(items))
+    for _, item := range items {
+        results = append(results, process(item))
+    }
+    return results
+}
+```
+
+### 9.2 使用 strings.Builder
+
+```go
+// ❌ 字符串拼接效率低
+func buildString(parts []string) string {
+    result := ""
+    for _, part := range parts {
+        result += part
+    }
+    return result
+}
+
+// ✅ 使用 Builder
+func buildString(parts []string) string {
+    var b strings.Builder
+    for _, part := range parts {
+        b.WriteString(part)
+    }
+    return b.String()
+}
+```
+
+### 9.3 複用對象（sync.Pool）
+
+```go
+var bufferPool = sync.Pool{
+    New: func() interface{} {
+        return new(bytes.Buffer)
+    },
+}
+
+func processData(data []byte) {
+    buf := bufferPool.Get().(*bytes.Buffer)
+    defer func() {
+        buf.Reset()
+        bufferPool.Put(buf)
+    }()
+    
+    // 使用 buffer
+    buf.Write(data)
+}
+```
+
+---
+
+## 10. 安全性原則
+
+### 10.1 避免 SQL 注入
+
+```go
+// ❌ 不安全
+query := fmt.Sprintf("SELECT * FROM users WHERE id = %s", userID)
+
+// ✅ 使用參數化查詢
+query := "SELECT * FROM users WHERE id = $1"
+db.Query(query, userID)
+```
+
+### 10.2 驗證用戶輸入
+
+```go
+func validateEmail(email string) error {
+    if email == "" {
+        return errors.New("email is required")
+    }
+    
+    re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$`)
+    if !re.MatchString(email) {
+        return errors.New("invalid email format")
+    }
+    
+    return nil
+}
+```
+
+### 10.3 避免敏感信息洩露
+
+```go
+// ❌ 不要在日誌中記錄敏感信息
+log.Printf("User login: email=%s, password=%s", email, password)
+
+// ✅ 只記錄必要信息
+log.Printf("User login attempt: email=%s", email)
+```
+
+---
+
+## 11. 測試原則
+
+### 11.1 表格驅動測試
+
+```go
+func TestAdd(t *testing.T) {
+    tests := []struct {
+        name string
+        a, b int
+        want int
+    }{
+        {"positive numbers", 1, 2, 3},
+        {"negative numbers", -1, -2, -3},
+        {"mixed", -1, 2, 1},
+        {"zero", 0, 0, 0},
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := Add(tt.a, tt.b)
+            if got != tt.want {
+                t.Errorf("Add(%d, %d) = %d, want %d", tt.a, tt.b, got, tt.want)
+            }
+        })
+    }
+}
+```
+
+### 11.2 使用接口進行測試
+
+```go
+// 生產代碼
+type UserRepository interface {
+    GetByID(id int) (*User, error)
+}
+
+type UserService struct {
+    repo UserRepository
+}
+
+// 測試代碼
+type mockUserRepository struct {
+    user *User
+    err  error
+}
+
+func (m *mockUserRepository) GetByID(id int) (*User, error) {
+    return m.user, m.err
+}
+
+func TestUserService_GetUser(t *testing.T) {
+    mockRepo := &mockUserRepository{
+        user: &User{ID: 1, Name: "Alice"},
+    }
+    
+    service := &UserService{repo: mockRepo}
+    user, err := service.GetUser(1)
+    
+    // 斷言...
+}
+```
+
+---
+
+## 12. 實用技巧
+
+### 12.1 使用 iota 定義常量
+
+```go
+type Status int
+
+const (
+    StatusPending Status = iota  // 0
+    StatusActive                 // 1
+    StatusInactive              // 2
+    StatusDeleted               // 3
+)
+
+const (
+    _  = iota  // 跳過 0
+    KB = 1 << (10 * iota)  // 1024
+    MB                      // 1048576
+    GB                      // 1073741824
+)
+```
+
+### 12.2 使用空 struct 節省內存
+
+```go
+// Set 實現
+type Set map[string]struct{}
+
+func (s Set) Add(key string) {
+    s[key] = struct{}{}  // struct{} 不佔用內存
+}
+
+func (s Set) Contains(key string) bool {
+    _, exists := s[key]
+    return exists
+}
+```
+
+### 12.3 使用 embed 嵌入資源
+
+```go
+import _ "embed"
+
+//go:embed config.json
+var configData []byte
+
+//go:embed templates/*
+var templates embed.FS
+
+func loadConfig() {
+    // 使用 configData
+}
+```
+
+---
+
+## 13. 總結：Go 之道
+
+1. **簡單勝於複雜** - 寫簡單的代碼，解決複雜的問題
+2. **組合勝於繼承** - 使用嵌入和接口組合功能
+3. **顯式勝於隱式** - 錯誤處理、類型轉換都要顯式
+4. **並發不是並行** - 理解 Goroutine 和並行的區別
+5. **接口要小** - 單一職責，易於實現
+6. **錯誤是值** - 像處理其他值一樣處理錯誤
+7. **少即是多** - 語言特性少，但功能強大
+
+---
+
+## 14. 推薦閱讀
+
+- [Effective Go](https://go.dev/doc/effective_go)
+- [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
+- [Go Proverbs](https://go-proverbs.github.io/)
+- [Practical Go](https://dave.cheney.net/practical-go/presentations/qcon-china.html)
+- [Uber Go Style Guide](https://github.com/uber-go/guide)
+
+---
+
+**恭喜！你已經完成了 Go 語言 10 天特訓的所有內容！** 🎉
