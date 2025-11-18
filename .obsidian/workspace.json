@@ -4,16 +4,16 @@
     "type": "split",
     "children": [
       {
-        "id": "9d9ea37e4237fcf7",
+        "id": "08697fddb5d18b0a",
         "type": "tabs",
         "children": [
           {
-            "id": "e0824954a18d7d8b",
+            "id": "5bf2a1d0992f421b",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/golang/10天突破系列/01-基礎篇/01-Go語法基礎與型別系統.md",
+                "file": "1. Programing/02-languages/rust/13-實戰項目/05-CLI工具開發.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,35 +28,10 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "01-Go語法基礎與型別系統"
-            }
-          },
-          {
-            "id": "a0833b0bd5092b20",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "1. Programing/02-languages/golang/10天突破系列/01-基礎篇/03-數據庫連接與SQL操作.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "03-數據庫連接與SQL操作"
+              "title": "05-CLI工具開發"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -216,44 +191,44 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "a0833b0bd5092b20",
+  "active": "5bf2a1d0992f421b",
   "lastOpenFiles": [
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api.md",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api/project-01-restful-api.md",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-03-database-service.md",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-02-concurrent-service.md",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/README.md",
-    "1. Programing/02-languages/golang/學習筆記/12-實戰項目模式.md",
-    "1. Programing/02-languages/golang/10天突破系列/01-基礎篇/03-數據庫連接與SQL操作.md",
-    "1. Programing/02-languages/golang/10天突破系列/01-基礎篇/02-錯誤處理與資源管理.md",
-    "1. Programing/02-languages/golang/10天突破系列/01-基礎篇/01-Go語法基礎與型別系統.md",
-    "1. Programing/02-languages/golang/10天突破系列/04-微服務篇/10-可觀測性與生產部署.md",
-    "1. Programing/02-languages/golang/10天突破系列/04-微服務篇/09-gRPC與訊息佇列.md",
-    "1. Programing/02-languages/golang/10天突破系列/02-併發篇/05-Context與併發模式.md",
-    "1. Programing/02-languages/golang/10天突破系列/03-Web開發篇/07-Web框架與中間件設計.md",
-    "1. Programing/02-languages/golang/10天突破系列/03-Web開發篇/08-數據持久化與容器化.md",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api/README.md",
-    "1. Programing/02-languages/golang/10天突破系列/00-學習路線圖.md",
-    "專案實踐/project-03-database-service.md",
-    "專案實踐/project-02-concurrent-service.md",
-    "專案實踐",
-    "1. Programing/02-languages/golang/10天突破系列/02-併發篇/04-Goroutine與Channel核心機制.md",
-    "1. Programing/02-languages/golang/10天突破系列/TODO.md",
-    "1. Programing/08-interview/Introduction.md",
-    "1. Programing/02-languages/golang/學習筆記/11-數據庫操作.md",
-    "1. Programing/02-languages/golang/學習筆記/10-Go_Web開發基礎.md",
-    "1. Programing/02-languages/golang/學習筆記/09-測試與性能調優.md",
-    "1. Programing/02-languages/golang/學習筆記/08-常用標準庫.md",
-    "1. Programing/02-languages/golang/學習筆記/07-包管理與模組設計.md",
+    "1. Programing/02-languages/rust/TODO.md",
+    "1. Programing/02-languages/rust/13-實戰項目/05-CLI工具開發.md",
+    "1. Programing/02-languages/rust/13-實戰項目/04-低延遲數據處理管道.md",
+    "1. Programing/02-languages/rust/13-實戰項目/03-TCP長連接管理服務器.md",
+    "1. Programing/02-languages/rust/11-WebAssembly/03-實戰項目-WASM應用開發.md",
+    "1. Programing/02-languages/rust/11-WebAssembly/02-wasm-bindgen與JS互操作.md",
+    "1. Programing/02-languages/rust/11-WebAssembly/01-WebAssembly基礎與工具鏈.md",
+    "1. Programing/02-languages/rust/13-實戰項目/02-異步消息隊列系統.md",
+    "1. Programing/02-languages/rust/13-實戰項目/01-高性能HTTP代理服務器.md",
+    "1. Programing/02-languages/rust/12-嵌入式開發/03-嵌入式項目實戰.md",
+    "1. Programing/02-languages/rust/12-嵌入式開發/01-嵌入式Rust基礎.md",
+    "1. Programing/02-languages/rust/12-嵌入式開發/02-嵌入式異步與RTIC.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/06-宏與元編程最佳實踐.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/05-常用宏庫深度解析.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/04-屬性宏與函數式宏.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/03-Derive宏進階.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/02-過程宏基礎.md",
+    "1. Programing/02-languages/rust/10-宏與元編程/01-聲明式宏深度解析.md",
+    "1. Programing/02-languages/rust/08-測試與品質保證/05-基準測試與性能測試.md",
+    "1. Programing/02-languages/rust/08-測試與品質保證/04-Mock與測試替身.md",
+    "1. Programing/02-languages/rust/08-測試與品質保證/03-測試覆蓋率與品質度量.md",
+    "1. Programing/02-languages/rust/08-測試與品質保證/02-屬性測試與Fuzzing.md",
+    "1. Programing/02-languages/rust/08-測試與品質保證/01-單元測試與集成測試.md",
+    "1. Programing/02-languages/rust/07-錯誤處理與除錯/05-Panic處理與恢復.md",
+    "1. Programing/02-languages/rust/07-錯誤處理與除錯/04-除錯工具與技巧.md",
+    "1. Programing/02-languages/rust/01-進階語言特性/01-錯誤處理與Result_Option模式.md",
+    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api",
     "1. Programing/02-languages/golang/學習筆記",
     "1. Programing/02-languages/golang/10天突破系列/附錄",
-    "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api",
     "1. Programing/02-languages/golang/10天突破系列/專案實踐",
     "1. Programing/02-languages/golang/10天突破系列/04-微服務篇",
     "1. Programing/02-languages/golang/10天突破系列/03-Web開發篇",
     "1. Programing/02-languages/golang/10天突破系列/02-併發篇",
     "1. Programing/02-languages/golang/10天突破系列/01-基礎篇",
-    "1. Programing/02-languages/golang/10天突破系列",
+    "1. Programing/02-languages/golang/10天突破系列/專案實踐/06-完整微服務系統",
+    "1. Programing/02-languages/golang/10天突破系列/專案實踐/05-Kafka消費者",
     "z.attachment/Pasted image 20250920205158.png",
     "z.attachment/Pasted image 20250920202422.png",
     "z.attachment/screenshot-1751196676.png",
