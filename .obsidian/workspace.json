@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/rust/13-實戰項目/05-CLI工具開發.md",
+                "file": "1. Programing/02-languages/cpp/金融C++專題/Day01-C++核心特性Part1.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,7 +28,55 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "05-CLI工具開發"
+              "title": "Day01-C++核心特性Part1"
+            }
+          },
+          {
+            "id": "ca4ad9bd8ba1ca91",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/02-languages/cpp/金融C++專題/TODO.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "TODO"
+            }
+          },
+          {
+            "id": "d4192ac9b8229b84",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/02-languages/cpp/01-核心語言特性/01-記憶體模型與所有權.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "01-記憶體模型與所有權"
             }
           }
         ]
@@ -88,7 +136,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 276.5
+    "width": 333.5
   },
   "right": {
     "id": "8fc2f11236ffbd5f",
@@ -193,32 +241,32 @@
   },
   "active": "5bf2a1d0992f421b",
   "lastOpenFiles": [
-    "1. Programing/02-languages/rust/TODO.md",
-    "1. Programing/02-languages/rust/13-實戰項目/05-CLI工具開發.md",
-    "1. Programing/02-languages/rust/13-實戰項目/04-低延遲數據處理管道.md",
-    "1. Programing/02-languages/rust/13-實戰項目/03-TCP長連接管理服務器.md",
-    "1. Programing/02-languages/rust/11-WebAssembly/03-實戰項目-WASM應用開發.md",
-    "1. Programing/02-languages/rust/11-WebAssembly/02-wasm-bindgen與JS互操作.md",
-    "1. Programing/02-languages/rust/11-WebAssembly/01-WebAssembly基礎與工具鏈.md",
-    "1. Programing/02-languages/rust/13-實戰項目/02-異步消息隊列系統.md",
-    "1. Programing/02-languages/rust/13-實戰項目/01-高性能HTTP代理服務器.md",
-    "1. Programing/02-languages/rust/12-嵌入式開發/03-嵌入式項目實戰.md",
-    "1. Programing/02-languages/rust/12-嵌入式開發/01-嵌入式Rust基礎.md",
-    "1. Programing/02-languages/rust/12-嵌入式開發/02-嵌入式異步與RTIC.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/06-宏與元編程最佳實踐.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/05-常用宏庫深度解析.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/04-屬性宏與函數式宏.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/03-Derive宏進階.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/02-過程宏基礎.md",
-    "1. Programing/02-languages/rust/10-宏與元編程/01-聲明式宏深度解析.md",
-    "1. Programing/02-languages/rust/08-測試與品質保證/05-基準測試與性能測試.md",
-    "1. Programing/02-languages/rust/08-測試與品質保證/04-Mock與測試替身.md",
-    "1. Programing/02-languages/rust/08-測試與品質保證/03-測試覆蓋率與品質度量.md",
-    "1. Programing/02-languages/rust/08-測試與品質保證/02-屬性測試與Fuzzing.md",
-    "1. Programing/02-languages/rust/08-測試與品質保證/01-單元測試與集成測試.md",
-    "1. Programing/02-languages/rust/07-錯誤處理與除錯/05-Panic處理與恢復.md",
-    "1. Programing/02-languages/rust/07-錯誤處理與除錯/04-除錯工具與技巧.md",
-    "1. Programing/02-languages/rust/01-進階語言特性/01-錯誤處理與Result_Option模式.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/01-記憶體模型與所有權.md",
+    "1. Programing/02-languages/cpp/金融C++專題/TODO.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day01-C++核心特性Part1.md",
+    "1. Programing/02-languages/cpp/TODO.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day06-網路程式設計基礎.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day07-網路進階與極致優化.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day08-Linux系統開發與調優.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day09-金融交易系統專題.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day10-整合實戰項目.md",
+    "1. Programing/02-languages/cpp/金融C++專題/標準庫與第三方庫指南.md",
+    "1. Programing/02-languages/cpp/05-系統編程/05-Linux特定優化技術.md",
+    "1. Programing/02-languages/cpp/05-系統編程/04-信號處理與異常安全.md",
+    "1. Programing/02-languages/cpp/05-系統編程/03-CPU親和性與調度.md",
+    "1. Programing/02-languages/cpp/05-系統編程/02-進程間通信_IPC.md",
+    "1. Programing/02-languages/cpp/06-工具鏈與調試/01-CMake構建系統.md",
+    "1. Programing/02-languages/cpp/06-工具鏈與調試/02-編譯器標誌與優化.md",
+    "1. Programing/02-languages/cpp/06-工具鏈與調試/03-性能分析工具.md",
+    "1. Programing/02-languages/cpp/06-工具鏈與調試/04-記憶體與並發檢測.md",
+    "1. Programing/02-languages/cpp/06-工具鏈與調試/05-基準測試框架.md",
+    "1. Programing/02-languages/cpp/07-標準庫與第三方庫/02-自定義記憶體分配器.md",
+    "1. Programing/02-languages/cpp/07-標準庫與第三方庫/03-Boost庫精選.md",
+    "1. Programing/02-languages/cpp/07-標準庫與第三方庫/04-高性能第三方庫.md",
+    "1. Programing/02-languages/cpp/07-標準庫與第三方庫/05-序列化庫.md",
+    "1. Programing/02-languages/cpp/07-標準庫與第三方庫/01-STL容器性能特性.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day02-C++現代特性Part2.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day03-編譯與優化.md",
     "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api",
     "1. Programing/02-languages/golang/學習筆記",
     "1. Programing/02-languages/golang/10天突破系列/附錄",
