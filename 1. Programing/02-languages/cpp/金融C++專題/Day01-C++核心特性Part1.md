@@ -1025,6 +1025,625 @@ int main() {
 }
 ```
 
+---
+
+### 練習 4: 智能指標資源管理器
+
+**任務**: 實作一個資源管理器,使用 `shared_ptr` 和 `weak_ptr` 管理共享資源。
+
+**要求**:
+- 資源管理器可以創建和管理多個資源
+- 使用 `weak_ptr` 實現資源緩存,避免循環引用
+- 實現 `getOrCreate` 模式
+- 資源在沒有使用者時自動釋放
+
+```cpp
+#include <memory>
+#include <unordered_map>
+#include <string>
+#include <iostream>
+
+class Resource {
+public:
+    Resource(const std::string& name) : name_(name) {
+        std::cout << "Resource '" << name_ << "' created\n";
+    }
+    ~Resource() {
+        std::cout << "Resource '" << name_ << "' destroyed\n";
+    }
+    void use() { std::cout << "Using resource '" << name_ << "'\n"; }
+private:
+    std::string name_;
+};
+
+class ResourceManager {
+private:
+    // 使用 weak_ptr 作為緩存,不會阻止資源釋放
+    std::unordered_map<std::string, std::weak_ptr<Resource>> cache_;
+    
+public:
+    std::shared_ptr<Resource> getOrCreate(const std::string& name) {
+        // 檢查緩存
+        auto it = cache_.find(name);
+        if (it != cache_.end()) {
+            // 嘗試升級 weak_ptr
+            if (auto sp = it->second.lock()) {
+                std::cout << "Cache hit for '" << name << "'\n";
+                return sp;
+            }
+        }
+        
+        // 創建新資源
+        std::cout << "Cache miss for '" << name << "'\n";
+        auto resource = std::make_shared<Resource>(name);
+        cache_[name] = resource;  // 存入緩存
+        return resource;
+    }
+    
+    void cleanup() {
+        // 移除已過期的緩存條目
+        for (auto it = cache_.begin(); it != cache_.end(); ) {
+            if (it->second.expired()) {
+                it = cache_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+    
+    size_t cacheSize() const { return cache_.size(); }
+};
+
+int main() {
+    ResourceManager manager;
+    
+    {
+        auto r1 = manager.getOrCreate("database");
+        auto r2 = manager.getOrCreate("database");  // 應該返回相同資源
+        r1->use();
+        
+        std::cout << "r1 use_count: " << r1.use_count() << "\n";  // 2
+    }
+    // r1, r2 超出範圍,資源釋放
+    
+    auto r3 = manager.getOrCreate("database");  // 應該創建新資源
+    
+    manager.cleanup();
+    std::cout << "Cache size after cleanup: " << manager.cacheSize() << "\n";
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 5: 完美轉發工廠函數
+
+**任務**: 實作一個通用的工廠函數,使用完美轉發創建物件。
+
+**要求**:
+- 支援任意數量和類型的建構子參數
+- 使用完美轉發保持參數的值類別
+- 返回 `unique_ptr` 管理的物件
+
+```cpp
+#include <memory>
+#include <utility>
+#include <string>
+#include <iostream>
+
+// 測試類別
+class Order {
+public:
+    Order(int id, std::string symbol, double price)
+        : id_(id), symbol_(std::move(symbol)), price_(price) {
+        std::cout << "Order created: " << id_ << ", " << symbol_ << ", " << price_ << "\n";
+    }
+    
+    // 禁止複製
+    Order(const Order&) = delete;
+    Order& operator=(const Order&) = delete;
+    
+    // 允許移動
+    Order(Order&&) = default;
+    Order& operator=(Order&&) = default;
+    
+    void print() const {
+        std::cout << "Order[" << id_ << "]: " << symbol_ << " @ " << price_ << "\n";
+    }
+
+private:
+    int id_;
+    std::string symbol_;
+    double price_;
+};
+
+// 通用工廠函數
+template<typename T, typename... Args>
+std::unique_ptr<T> make_object(Args&&... args) {
+    return std::make_unique<T>(std::forward<Args>(args)...);
+}
+
+// 帶日誌的工廠函數
+template<typename T, typename... Args>
+std::unique_ptr<T> make_logged(const std::string& tag, Args&&... args) {
+    std::cout << "[" << tag << "] Creating object...\n";
+    auto obj = std::make_unique<T>(std::forward<Args>(args)...);
+    std::cout << "[" << tag << "] Object created successfully\n";
+    return obj;
+}
+
+int main() {
+    // 測試完美轉發
+    auto order1 = make_object<Order>(1, "AAPL", 150.5);
+    order1->print();
+    
+    std::string symbol = "GOOGL";
+    auto order2 = make_object<Order>(2, symbol, 2800.0);  // 左值
+    auto order3 = make_object<Order>(3, std::move(symbol), 2850.0);  // 右值
+    
+    // 帶日誌版本
+    auto order4 = make_logged<Order>("Factory", 4, "MSFT", 300.0);
+    order4->print();
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 6: Lambda 事件處理系統
+
+**任務**: 實作一個簡單的事件處理系統,使用 Lambda 作為事件處理器。
+
+**要求**:
+- 支援多種事件類型
+- 使用模板避免 `std::function` 開銷
+- 實現事件訂閱和發布機制
+
+```cpp
+#include <vector>
+#include <functional>
+#include <iostream>
+#include <string>
+
+// 事件類型
+struct MarketDataEvent {
+    std::string symbol;
+    double price;
+    int volume;
+};
+
+struct OrderEvent {
+    int orderId;
+    std::string action;  // "NEW", "FILLED", "CANCELLED"
+};
+
+// 高性能版本:使用模板,避免 std::function
+template<typename EventType>
+class EventDispatcher {
+private:
+    // 這裡為了簡化使用 std::function,實際 HFT 應使用函數指標陣列
+    std::vector<std::function<void(const EventType&)>> handlers_;
+    
+public:
+    template<typename Handler>
+    void subscribe(Handler&& handler) {
+        handlers_.emplace_back(std::forward<Handler>(handler));
+    }
+    
+    void publish(const EventType& event) {
+        for (auto& handler : handlers_) {
+            handler(event);
+        }
+    }
+    
+    size_t handlerCount() const { return handlers_.size(); }
+};
+
+// 零開銷版本:編譯期多態
+template<typename... Handlers>
+class StaticDispatcher {
+private:
+    std::tuple<Handlers...> handlers_;
+    
+    template<typename Event, std::size_t... Is>
+    void dispatchImpl(const Event& event, std::index_sequence<Is...>) {
+        (std::get<Is>(handlers_)(event), ...);  // C++17 fold expression
+    }
+    
+public:
+    StaticDispatcher(Handlers... handlers) : handlers_(handlers...) {}
+    
+    template<typename Event>
+    void dispatch(const Event& event) {
+        dispatchImpl(event, std::index_sequence_for<Handlers...>{});
+    }
+};
+
+// 輔助函數
+template<typename... Handlers>
+auto makeDispatcher(Handlers... handlers) {
+    return StaticDispatcher<Handlers...>(handlers...);
+}
+
+int main() {
+    // 動態版本
+    EventDispatcher<MarketDataEvent> marketDispatcher;
+    
+    marketDispatcher.subscribe([](const MarketDataEvent& e) {
+        std::cout << "Handler 1: " << e.symbol << " @ " << e.price << "\n";
+    });
+    
+    marketDispatcher.subscribe([](const MarketDataEvent& e) {
+        if (e.price > 100) {
+            std::cout << "Handler 2: High price alert for " << e.symbol << "!\n";
+        }
+    });
+    
+    marketDispatcher.publish({"AAPL", 150.5, 1000});
+    
+    // 靜態版本 (零開銷)
+    auto handler1 = [](const OrderEvent& e) {
+        std::cout << "Order " << e.orderId << ": " << e.action << "\n";
+    };
+    
+    auto handler2 = [](const OrderEvent& e) {
+        if (e.action == "FILLED") {
+            std::cout << "Order " << e.orderId << " filled, updating position\n";
+        }
+    };
+    
+    auto staticDispatcher = makeDispatcher(handler1, handler2);
+    staticDispatcher.dispatch(OrderEvent{12345, "FILLED"});
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 7: 可變參數日誌系統
+
+**任務**: 實作一個類型安全的日誌系統,使用可變參數模板。
+
+**要求**:
+- 支援任意數量和類型的參數
+- 支援多種日誌級別
+- 編譯期格式檢查
+- 高性能 (避免不必要的字串分配)
+
+```cpp
+#include <iostream>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+enum class LogLevel { DEBUG, INFO, WARNING, ERROR };
+
+class Logger {
+private:
+    LogLevel minLevel_ = LogLevel::DEBUG;
+    
+    void printTimestamp() {
+        auto now = std::chrono::system_clock::now();
+        auto time = std::chrono::system_clock::to_time_t(now);
+        std::cout << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+    }
+    
+    const char* levelToString(LogLevel level) {
+        switch (level) {
+            case LogLevel::DEBUG:   return "DEBUG";
+            case LogLevel::INFO:    return "INFO ";
+            case LogLevel::WARNING: return "WARN ";
+            case LogLevel::ERROR:   return "ERROR";
+        }
+        return "UNKNOWN";
+    }
+    
+    // 基礎情況:無參數
+    void logArgs() {
+        std::cout << "\n";
+    }
+    
+    // 遞迴展開參數
+    template<typename T, typename... Args>
+    void logArgs(const T& first, const Args&... rest) {
+        std::cout << first;
+        if constexpr (sizeof...(rest) > 0) {
+            std::cout << " ";
+        }
+        logArgs(rest...);
+    }
+    
+public:
+    void setMinLevel(LogLevel level) { minLevel_ = level; }
+    
+    template<typename... Args>
+    void log(LogLevel level, const Args&... args) {
+        if (level < minLevel_) return;
+        
+        std::cout << "[";
+        printTimestamp();
+        std::cout << "] [" << levelToString(level) << "] ";
+        logArgs(args...);
+    }
+    
+    template<typename... Args>
+    void debug(const Args&... args) { log(LogLevel::DEBUG, args...); }
+    
+    template<typename... Args>
+    void info(const Args&... args) { log(LogLevel::INFO, args...); }
+    
+    template<typename... Args>
+    void warning(const Args&... args) { log(LogLevel::WARNING, args...); }
+    
+    template<typename... Args>
+    void error(const Args&... args) { log(LogLevel::ERROR, args...); }
+};
+
+// 全域 Logger 實例
+Logger& getLogger() {
+    static Logger instance;
+    return instance;
+}
+
+// 方便使用的宏
+#define LOG_DEBUG(...) getLogger().debug(__VA_ARGS__)
+#define LOG_INFO(...) getLogger().info(__VA_ARGS__)
+#define LOG_WARNING(...) getLogger().warning(__VA_ARGS__)
+#define LOG_ERROR(...) getLogger().error(__VA_ARGS__)
+
+int main() {
+    Logger& logger = getLogger();
+    
+    logger.info("Application started");
+    logger.debug("Processing order", 12345, "for symbol", "AAPL");
+    logger.warning("High latency detected:", 150, "ms");
+    logger.error("Connection lost to exchange", "NYSE");
+    
+    // 使用宏
+    LOG_INFO("Using macro interface");
+    
+    // 調整日誌級別
+    logger.setMinLevel(LogLevel::WARNING);
+    LOG_DEBUG("This won't be printed");
+    LOG_WARNING("This will be printed");
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 8: 編譯期計算的查找表
+
+**任務**: 使用模板元編程在編譯期生成查找表。
+
+**要求**:
+- 編譯期計算費波那契數列
+- 編譯期計算階乘
+- 使用 `constexpr` 優化
+
+```cpp
+#include <iostream>
+#include <array>
+
+// 編譯期階乘
+constexpr unsigned long long factorial(int n) {
+    return (n <= 1) ? 1 : n * factorial(n - 1);
+}
+
+// 編譯期費波那契
+constexpr unsigned long long fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// 生成編譯期查找表
+template<std::size_t N>
+constexpr std::array<unsigned long long, N> generateFactorialTable() {
+    std::array<unsigned long long, N> table{};
+    for (std::size_t i = 0; i < N; ++i) {
+        table[i] = factorial(i);
+    }
+    return table;
+}
+
+template<std::size_t N>
+constexpr std::array<unsigned long long, N> generateFibonacciTable() {
+    std::array<unsigned long long, N> table{};
+    for (std::size_t i = 0; i < N; ++i) {
+        table[i] = fibonacci(i);
+    }
+    return table;
+}
+
+// 查找表 (編譯期生成)
+constexpr auto factorialTable = generateFactorialTable<21>();  // 20! 是 unsigned long long 的極限
+constexpr auto fibonacciTable = generateFibonacciTable<50>();
+
+// 模板元編程版本 (C++11 相容)
+template<int N>
+struct Factorial {
+    static constexpr unsigned long long value = N * Factorial<N - 1>::value;
+};
+
+template<>
+struct Factorial<0> {
+    static constexpr unsigned long long value = 1;
+};
+
+template<int N>
+struct Fibonacci {
+    static constexpr unsigned long long value = Fibonacci<N - 1>::value + Fibonacci<N - 2>::value;
+};
+
+template<>
+struct Fibonacci<0> {
+    static constexpr unsigned long long value = 0;
+};
+
+template<>
+struct Fibonacci<1> {
+    static constexpr unsigned long long value = 1;
+};
+
+int main() {
+    // 使用查找表 (O(1) 查詢,編譯期計算)
+    std::cout << "5! = " << factorialTable[5] << "\n";
+    std::cout << "10! = " << factorialTable[10] << "\n";
+    std::cout << "20! = " << factorialTable[20] << "\n";
+    
+    std::cout << "Fib(10) = " << fibonacciTable[10] << "\n";
+    std::cout << "Fib(40) = " << fibonacciTable[40] << "\n";
+    
+    // 模板元編程版本
+    std::cout << "Factorial<10>::value = " << Factorial<10>::value << "\n";
+    std::cout << "Fibonacci<20>::value = " << Fibonacci<20>::value << "\n";
+    
+    // 驗證編譯期計算
+    static_assert(factorialTable[5] == 120, "Compile-time check failed");
+    static_assert(Fibonacci<10>::value == 55, "Compile-time check failed");
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 9: 自定義智能指標
+
+**任務**: 實作一個簡化版的 `unique_ptr`。
+
+**要求**:
+- 禁止複製
+- 支援移動語義
+- 支援自定義刪除器
+- 實現 `reset`, `release`, `get` 方法
+
+```cpp
+#include <iostream>
+#include <utility>
+
+template<typename T, typename Deleter = std::default_delete<T>>
+class MyUniquePtr {
+private:
+    T* ptr_ = nullptr;
+    Deleter deleter_;
+    
+public:
+    // 建構子
+    explicit MyUniquePtr(T* ptr = nullptr) : ptr_(ptr) {}
+    
+    MyUniquePtr(T* ptr, Deleter deleter) : ptr_(ptr), deleter_(deleter) {}
+    
+    // 解構子
+    ~MyUniquePtr() {
+        if (ptr_) {
+            deleter_(ptr_);
+        }
+    }
+    
+    // 禁止複製
+    MyUniquePtr(const MyUniquePtr&) = delete;
+    MyUniquePtr& operator=(const MyUniquePtr&) = delete;
+    
+    // 移動建構子
+    MyUniquePtr(MyUniquePtr&& other) noexcept
+        : ptr_(std::exchange(other.ptr_, nullptr)),
+          deleter_(std::move(other.deleter_)) {}
+    
+    // 移動賦值
+    MyUniquePtr& operator=(MyUniquePtr&& other) noexcept {
+        if (this != &other) {
+            reset();
+            ptr_ = std::exchange(other.ptr_, nullptr);
+            deleter_ = std::move(other.deleter_);
+        }
+        return *this;
+    }
+    
+    // 解引用
+    T& operator*() const { return *ptr_; }
+    T* operator->() const { return ptr_; }
+    
+    // 獲取裸指標
+    T* get() const { return ptr_; }
+    
+    // 釋放所有權
+    T* release() {
+        return std::exchange(ptr_, nullptr);
+    }
+    
+    // 重置
+    void reset(T* ptr = nullptr) {
+        T* old = std::exchange(ptr_, ptr);
+        if (old) {
+            deleter_(old);
+        }
+    }
+    
+    // 布林轉換
+    explicit operator bool() const { return ptr_ != nullptr; }
+    
+    // 交換
+    void swap(MyUniquePtr& other) noexcept {
+        std::swap(ptr_, other.ptr_);
+        std::swap(deleter_, other.deleter_);
+    }
+};
+
+// make_unique 實作
+template<typename T, typename... Args>
+MyUniquePtr<T> my_make_unique(Args&&... args) {
+    return MyUniquePtr<T>(new T(std::forward<Args>(args)...));
+}
+
+// 測試類別
+class TestClass {
+public:
+    TestClass(int value) : value_(value) {
+        std::cout << "TestClass(" << value_ << ") created\n";
+    }
+    ~TestClass() {
+        std::cout << "TestClass(" << value_ << ") destroyed\n";
+    }
+    int getValue() const { return value_; }
+private:
+    int value_;
+};
+
+int main() {
+    // 基本使用
+    auto ptr1 = my_make_unique<TestClass>(42);
+    std::cout << "Value: " << ptr1->getValue() << "\n";
+    
+    // 移動
+    auto ptr2 = std::move(ptr1);
+    if (!ptr1) {
+        std::cout << "ptr1 is now null\n";
+    }
+    
+    // reset
+    ptr2.reset(new TestClass(100));
+    
+    // release
+    TestClass* raw = ptr2.release();
+    delete raw;
+    
+    // 自定義刪除器
+    auto customDeleter = [](TestClass* p) {
+        std::cout << "Custom deleter called\n";
+        delete p;
+    };
+    MyUniquePtr<TestClass, decltype(customDeleter)> ptr3(
+        new TestClass(200), customDeleter);
+    
+    return 0;
+}
+```
+
 
 ---
 

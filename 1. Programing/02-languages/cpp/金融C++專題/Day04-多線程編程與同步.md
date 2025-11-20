@@ -1175,6 +1175,333 @@ int main() {
 
 ---
 
+### 練習 5: 讀寫鎖性能測試
+
+**需求:** 實現讀多寫少場景的讀寫鎖對比測試。
+
+```cpp
+#include <shared_mutex>
+#include <mutex>
+#include <thread>
+#include <vector>
+#include <chrono>
+#include <iostream>
+
+class SharedCounter {
+private:
+    mutable std::shared_mutex mtx_;
+    int value_ = 0;
+    
+public:
+    int read() const {
+        std::shared_lock lock(mtx_);
+        return value_;
+    }
+    
+    void write(int delta) {
+        std::unique_lock lock(mtx_);
+        value_ += delta;
+    }
+};
+
+class MutexCounter {
+private:
+    mutable std::mutex mtx_;
+    int value_ = 0;
+    
+public:
+    int read() const {
+        std::lock_guard lock(mtx_);
+        return value_;
+    }
+    
+    void write(int delta) {
+        std::lock_guard lock(mtx_);
+        value_ += delta;
+    }
+};
+
+template<typename Counter>
+void benchmark_rw(const std::string& name, int readers, int writers) {
+    Counter counter;
+    std::atomic<bool> running{true};
+    std::atomic<int> readCount{0};
+    std::atomic<int> writeCount{0};
+    
+    std::vector<std::thread> threads;
+    
+    // 讀者線程
+    for (int i = 0; i < readers; ++i) {
+        threads.emplace_back([&]() {
+            while (running.load()) {
+                counter.read();
+                readCount.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+    }
+    
+    // 寫者線程
+    for (int i = 0; i < writers; ++i) {
+        threads.emplace_back([&]() {
+            while (running.load()) {
+                counter.write(1);
+                writeCount.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+    }
+    
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    running.store(false);
+    
+    for (auto& t : threads) t.join();
+    
+    std::cout << name << " (" << readers << "R/" << writers << "W):\n"
+              << "  Reads: " << readCount.load() / 1000000.0 << "M\n"
+              << "  Writes: " << writeCount.load() / 1000000.0 << "M\n";
+}
+
+int main() {
+    std::cout << "=== 90% Reads / 10% Writes ===\n";
+    benchmark_rw<SharedCounter>("shared_mutex", 9, 1);
+    benchmark_rw<MutexCounter>("mutex", 9, 1);
+    
+    std::cout << "\n=== 50% Reads / 50% Writes ===\n";
+    benchmark_rw<SharedCounter>("shared_mutex", 5, 5);
+    benchmark_rw<MutexCounter>("mutex", 5, 5);
+    
+    return 0;
+}
+```
+
+**預期結果:** 讀多寫少時 shared_mutex 性能更好。
+
+---
+
+### 練習 6: 死鎖檢測與避免
+
+**需求:** 實現會產生死鎖的程式,然後使用 std::scoped_lock 修復。
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+
+class BankAccount {
+private:
+    std::mutex mtx_;
+    double balance_;
+    int id_;
+    
+public:
+    BankAccount(int id, double balance) : id_(id), balance_(balance) {}
+    
+    // 危險版本 - 可能死鎖
+    void transfer_dangerous(BankAccount& to, double amount) {
+        std::lock_guard lock1(mtx_);  // 鎖自己
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));  // 增加死鎖概率
+        std::lock_guard lock2(to.mtx_);  // 鎖對方
+        
+        if (balance_ >= amount) {
+            balance_ -= amount;
+            to.balance_ += amount;
+            std::cout << "Transfer " << amount << " from " << id_ 
+                      << " to " << to.id_ << "\n";
+        }
+    }
+    
+    // 安全版本 - 使用 scoped_lock
+    void transfer_safe(BankAccount& to, double amount) {
+        std::scoped_lock lock(mtx_, to.mtx_);  // 一次鎖定兩個
+        
+        if (balance_ >= amount) {
+            balance_ -= amount;
+            to.balance_ += amount;
+            std::cout << "Transfer " << amount << " from " << id_ 
+                      << " to " << to.id_ << "\n";
+        }
+    }
+    
+    double get_balance() const { return balance_; }
+};
+
+void test_deadlock() {
+    BankAccount acc1(1, 1000);
+    BankAccount acc2(2, 1000);
+    
+    // 這會導致死鎖!
+    std::thread t1([&]() {
+        for (int i = 0; i < 100; ++i) {
+            acc1.transfer_dangerous(acc2, 10);
+        }
+    });
+    
+    std::thread t2([&]() {
+        for (int i = 0; i < 100; ++i) {
+            acc2.transfer_dangerous(acc1, 10);
+        }
+    });
+    
+    t1.join();
+    t2.join();
+}
+
+void test_safe() {
+    BankAccount acc1(1, 1000);
+    BankAccount acc2(2, 1000);
+    
+    std::thread t1([&]() {
+        for (int i = 0; i < 100; ++i) {
+            acc1.transfer_safe(acc2, 10);
+        }
+    });
+    
+    std::thread t2([&]() {
+        for (int i = 0; i < 100; ++i) {
+            acc2.transfer_safe(acc1, 10);
+        }
+    });
+    
+    t1.join();
+    t2.join();
+    
+    std::cout << "Account 1: " << acc1.get_balance() << "\n";
+    std::cout << "Account 2: " << acc2.get_balance() << "\n";
+}
+
+int main() {
+    std::cout << "=== Safe Transfer ===\n";
+    test_safe();
+    
+    // 取消註釋以下行將導致死鎖
+    // std::cout << "\n=== Dangerous Transfer (will deadlock) ===\n";
+    // test_deadlock();
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 7: 線程池實現
+
+**需求:** 實現一個支持任務優先級的線程池。
+
+```cpp
+#include <vector>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <future>
+#include <iostream>
+
+class PriorityThreadPool {
+public:
+    struct Task {
+        int priority;
+        std::function<void()> func;
+        
+        bool operator<(const Task& other) const {
+            return priority < other.priority;  // 優先級越高越先執行
+        }
+    };
+    
+private:
+    std::vector<std::thread> workers_;
+    std::priority_queue<Task> tasks_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    bool stop_ = false;
+    
+public:
+    explicit PriorityThreadPool(size_t threads) {
+        for (size_t i = 0; i < threads; ++i) {
+            workers_.emplace_back([this] {
+                while (true) {
+                    Task task;
+                    
+                    {
+                        std::unique_lock lock(mtx_);
+                        cv_.wait(lock, [this] {
+                            return stop_ || !tasks_.empty();
+                        });
+                        
+                        if (stop_ && tasks_.empty()) return;
+                        
+                        task = std::move(const_cast<Task&>(tasks_.top()));
+                        tasks_.pop();
+                    }
+                    
+                    task.func();
+                }
+            });
+        }
+    }
+    
+    template<typename F>
+    auto enqueue(int priority, F&& f) 
+        -> std::future<typename std::result_of<F()>::type> {
+        
+        using return_type = typename std::result_of<F()>::type;
+        
+        auto task = std::make_shared<std::packaged_task<return_type()>>(
+            std::forward<F>(f)
+        );
+        
+        std::future<return_type> res = task->get_future();
+        
+        {
+            std::lock_guard lock(mtx_);
+            if (stop_) throw std::runtime_error("enqueue on stopped pool");
+            
+            tasks_.push({priority, [task]() { (*task)(); }});
+        }
+        
+        cv_.notify_one();
+        return res;
+    }
+    
+    ~PriorityThreadPool() {
+        {
+            std::lock_guard lock(mtx_);
+            stop_ = true;
+        }
+        cv_.notify_all();
+        for (auto& worker : workers_) {
+            worker.join();
+        }
+    }
+};
+
+int main() {
+    PriorityThreadPool pool(4);
+    
+    // 添加不同優先級的任務
+    auto f1 = pool.enqueue(1, []() {
+        std::cout << "Low priority task\n";
+        return 1;
+    });
+    
+    auto f2 = pool.enqueue(10, []() {
+        std::cout << "High priority task\n";
+        return 10;
+    });
+    
+    auto f3 = pool.enqueue(5, []() {
+        std::cout << "Medium priority task\n";
+        return 5;
+    });
+    
+    // 等待所有任務完成
+    std::cout << "Results: " << f1.get() << ", " << f2.get() << ", " << f3.get() << "\n";
+    
+    return 0;
+}
+```
+
+---
+
 ## 關鍵要點總結
 
 ### 線程管理

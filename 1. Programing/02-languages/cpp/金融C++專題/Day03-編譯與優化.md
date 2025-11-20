@@ -888,6 +888,210 @@ endif()
 
 ---
 
+### 練習 5: 使用 Compiler Explorer 分析彙編輸出
+
+**任務:** 使用 Compiler Explorer (godbolt.org) 分析不同優化級別下的彙編輸出差異。
+
+```cpp
+// 分析以下函數在 -O0, -O2, -O3 下的彙編差異
+int sum_array(const int* arr, int n) {
+    int sum = 0;
+    for (int i = 0; i < n; ++i) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// 啟用 auto-vectorization 後的版本
+// 觀察是否生成 SIMD 指令 (如 vpaddq, vpaddd)
+int sum_array_unrolled(const int* arr, int n) {
+    int sum = 0;
+    int i = 0;
+    
+    // 手動展開
+    for (; i + 4 <= n; i += 4) {
+        sum += arr[i] + arr[i+1] + arr[i+2] + arr[i+3];
+    }
+    
+    for (; i < n; ++i) {
+        sum += arr[i];
+    }
+    
+    return sum;
+}
+```
+
+**觀察要點:**
+1. 循環展開 (Loop Unrolling)
+2. SIMD 向量化
+3. 寄存器分配
+4. 內聯展開
+
+---
+
+### 練習 6: Profile-Guided Optimization (PGO)
+
+**任務:** 實作 PGO 並測量性能提升。
+
+```cpp
+// pgo_benchmark.cpp
+#include <iostream>
+#include <vector>
+#include <random>
+#include <chrono>
+
+// 模擬訂單處理
+enum class OrderType { MARKET, LIMIT, STOP, STOP_LIMIT };
+
+struct Order {
+    OrderType type;
+    double price;
+    int quantity;
+};
+
+void process_order(const Order& order) {
+    // 不同訂單類型的處理路徑
+    switch (order.type) {
+        case OrderType::LIMIT:
+            // 最常見: 80%
+            // 模擬處理
+            volatile double x = order.price * order.quantity;
+            break;
+        case OrderType::MARKET:
+            // 次常見: 15%
+            volatile double y = order.quantity;
+            break;
+        case OrderType::STOP:
+        case OrderType::STOP_LIMIT:
+            // 罕見: 5%
+            volatile double z = order.price;
+            break;
+    }
+}
+
+int main() {
+    // 生成符合真實分佈的測試數據
+    std::vector<Order> orders;
+    std::mt19937 gen(42);
+    std::uniform_real_distribution<> dist(0, 1);
+    
+    for (int i = 0; i < 10000000; ++i) {
+        Order order;
+        double r = dist(gen);
+        
+        if (r < 0.80) {
+            order.type = OrderType::LIMIT;
+        } else if (r < 0.95) {
+            order.type = OrderType::MARKET;
+        } else {
+            order.type = r < 0.975 ? OrderType::STOP : OrderType::STOP_LIMIT;
+        }
+        
+        order.price = 100.0 + dist(gen) * 10;
+        order.quantity = 100 + gen() % 900;
+        orders.push_back(order);
+    }
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (const auto& order : orders) {
+        process_order(order);
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+    std::cout << "Time: " << duration.count() << " ms\n";
+    return 0;
+}
+```
+
+**PGO 步驟:**
+
+```bash
+# 1. 生成 instrumented binary
+g++ -O3 -fprofile-generate pgo_benchmark.cpp -o pgo_gen
+
+# 2. 運行收集 profile 數據
+./pgo_gen
+
+# 3. 使用 profile 數據重新編譯
+g++ -O3 -fprofile-use pgo_benchmark.cpp -o pgo_opt
+
+# 4. 對比性能
+time ./pgo_gen
+time ./pgo_opt
+```
+
+---
+
+### 練習 7: 函數屬性優化
+
+**任務:** 使用各種函數屬性優化關鍵路徑。
+
+```cpp
+#include <iostream>
+#include <cmath>
+
+// 1. hot/cold 屬性
+__attribute__((hot))
+double critical_calculation(double x) {
+    return std::sqrt(x) * std::log(x);
+}
+
+__attribute__((cold))
+void log_error(const char* msg) {
+    std::cerr << "Error: " << msg << std::endl;
+}
+
+// 2. pure/const 屬性 (允許更激進優化)
+__attribute__((pure))
+int calculate_fee(int quantity, int rate) {
+    return quantity * rate / 100;
+}
+
+__attribute__((const))
+int factorial(int n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
+// 3. flatten 屬性 (內聯所有調用)
+__attribute__((flatten))
+double process_data(double* data, int n) {
+    double sum = 0;
+    for (int i = 0; i < n; ++i) {
+        sum += critical_calculation(data[i]);
+    }
+    return sum;
+}
+
+// 4. noinline (阻止內聯,用於調試)
+__attribute__((noinline))
+void debug_checkpoint(int line) {
+    // 調試檢查點
+}
+
+// 5. aligned (對齊優化)
+struct __attribute__((aligned(64))) CacheAlignedData {
+    double values[8];
+};
+
+int main() {
+    double data[] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    
+    double result = process_data(data, 5);
+    int fee = calculate_fee(1000, 5);
+    
+    std::cout << "Result: " << result << "\n";
+    std::cout << "Fee: " << fee << "\n";
+    std::cout << "5! = " << factorial(5) << "\n";
+    
+    return 0;
+}
+```
+
+---
+
 ## 關鍵要點總結
 
 ### 編譯優化檢查清單 (HFT)

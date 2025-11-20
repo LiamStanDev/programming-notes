@@ -1194,6 +1194,434 @@ void latency_test(int socket_fd, bool nodelay) {
 }
 ```
 
+### 練習 5: 連接池實作
+
+**需求:** 實作高效的 TCP 連接池,支持連接重用。
+
+```cpp
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+class ConnectionPool {
+private:
+    std::string host_;
+    uint16_t port_;
+    size_t maxSize_;
+    
+    std::queue<int> available_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    size_t totalConnections_ = 0;
+    
+    int createConnection() {
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) return -1;
+        
+        // TCP 優化
+        int nodelay = 1;
+        setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
+        
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port_);
+        inet_pton(AF_INET, host_.c_str(), &addr.sin_addr);
+        
+        if (connect(sock, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            close(sock);
+            return -1;
+        }
+        
+        return sock;
+    }
+    
+public:
+    ConnectionPool(const std::string& host, uint16_t port, size_t maxSize)
+        : host_(host), port_(port), maxSize_(maxSize) {}
+    
+    ~ConnectionPool() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        while (!available_.empty()) {
+            close(available_.front());
+            available_.pop();
+        }
+    }
+    
+    // 獲取連接
+    int acquire() {
+        std::unique_lock<std::mutex> lock(mutex_);
+        
+        // 有可用連接
+        if (!available_.empty()) {
+            int conn = available_.front();
+            available_.pop();
+            return conn;
+        }
+        
+        // 創建新連接
+        if (totalConnections_ < maxSize_) {
+            int conn = createConnection();
+            if (conn >= 0) {
+                ++totalConnections_;
+                return conn;
+            }
+        }
+        
+        // 等待可用連接
+        cv_.wait(lock, [this] { return !available_.empty(); });
+        int conn = available_.front();
+        available_.pop();
+        return conn;
+    }
+    
+    // 釋放連接
+    void release(int conn) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        available_.push(conn);
+        cv_.notify_one();
+    }
+    
+    // RAII 包裝
+    class Connection {
+        ConnectionPool& pool_;
+        int fd_;
+    public:
+        Connection(ConnectionPool& pool) : pool_(pool), fd_(pool.acquire()) {}
+        ~Connection() { pool_.release(fd_); }
+        int fd() const { return fd_; }
+        operator int() const { return fd_; }
+    };
+};
+
+// 使用示例
+int main() {
+    ConnectionPool pool("127.0.0.1", 8080, 10);
+    
+    // 並發請求
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 20; ++i) {
+        threads.emplace_back([&pool, i] {
+            ConnectionPool::Connection conn(pool);
+            
+            // 發送請求
+            std::string request = "Request " + std::to_string(i);
+            send(conn, request.c_str(), request.size(), 0);
+            
+            // 接收響應
+            char buffer[1024];
+            recv(conn, buffer, sizeof(buffer), 0);
+        });
+    }
+    
+    for (auto& t : threads) t.join();
+}
+```
+
+### 練習 6: 高性能 HTTP 解析器
+
+**需求:** 實作零拷貝的 HTTP 請求解析器。
+
+```cpp
+#include <string_view>
+#include <unordered_map>
+
+class HTTPParser {
+public:
+    struct Request {
+        std::string_view method;
+        std::string_view uri;
+        std::string_view version;
+        std::unordered_map<std::string_view, std::string_view> headers;
+        std::string_view body;
+    };
+    
+    enum class State {
+        RequestLine,
+        Headers,
+        Body,
+        Complete,
+        Error
+    };
+    
+private:
+    State state_ = State::RequestLine;
+    const char* data_ = nullptr;
+    size_t size_ = 0;
+    size_t pos_ = 0;
+    Request request_;
+    size_t contentLength_ = 0;
+    
+    std::string_view readLine() {
+        size_t start = pos_;
+        while (pos_ < size_ - 1) {
+            if (data_[pos_] == '\r' && data_[pos_ + 1] == '\n') {
+                std::string_view line(data_ + start, pos_ - start);
+                pos_ += 2;
+                return line;
+            }
+            ++pos_;
+        }
+        return {};
+    }
+    
+    bool parseRequestLine(std::string_view line) {
+        // "GET /path HTTP/1.1"
+        size_t methodEnd = line.find(' ');
+        if (methodEnd == std::string_view::npos) return false;
+        
+        request_.method = line.substr(0, methodEnd);
+        
+        size_t uriEnd = line.find(' ', methodEnd + 1);
+        if (uriEnd == std::string_view::npos) return false;
+        
+        request_.uri = line.substr(methodEnd + 1, uriEnd - methodEnd - 1);
+        request_.version = line.substr(uriEnd + 1);
+        
+        return true;
+    }
+    
+    bool parseHeader(std::string_view line) {
+        // "Content-Length: 123"
+        size_t colonPos = line.find(':');
+        if (colonPos == std::string_view::npos) return false;
+        
+        std::string_view name = line.substr(0, colonPos);
+        std::string_view value = line.substr(colonPos + 1);
+        
+        // 跳過前導空格
+        while (!value.empty() && value[0] == ' ') {
+            value.remove_prefix(1);
+        }
+        
+        request_.headers[name] = value;
+        
+        // 檢查 Content-Length
+        if (name == "Content-Length") {
+            contentLength_ = 0;
+            for (char c : value) {
+                if (c >= '0' && c <= '9') {
+                    contentLength_ = contentLength_ * 10 + (c - '0');
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+public:
+    State parse(const char* data, size_t size) {
+        data_ = data;
+        size_ = size;
+        pos_ = 0;
+        
+        while (pos_ < size_) {
+            switch (state_) {
+            case State::RequestLine: {
+                auto line = readLine();
+                if (line.empty()) return state_;
+                
+                if (!parseRequestLine(line)) {
+                    state_ = State::Error;
+                    return state_;
+                }
+                state_ = State::Headers;
+                break;
+            }
+            
+            case State::Headers: {
+                auto line = readLine();
+                if (line.empty()) return state_;
+                
+                if (line.size() == 0) {
+                    // 空行,headers 結束
+                    if (contentLength_ > 0) {
+                        state_ = State::Body;
+                    } else {
+                        state_ = State::Complete;
+                    }
+                } else {
+                    parseHeader(line);
+                }
+                break;
+            }
+            
+            case State::Body: {
+                size_t remaining = size_ - pos_;
+                if (remaining >= contentLength_) {
+                    request_.body = std::string_view(data_ + pos_, contentLength_);
+                    pos_ += contentLength_;
+                    state_ = State::Complete;
+                } else {
+                    return state_;  // 需要更多數據
+                }
+                break;
+            }
+            
+            default:
+                return state_;
+            }
+        }
+        
+        return state_;
+    }
+    
+    const Request& getRequest() const { return request_; }
+    
+    void reset() {
+        state_ = State::RequestLine;
+        request_ = {};
+        contentLength_ = 0;
+    }
+};
+
+// 測試
+int main() {
+    const char* request = 
+        "GET /api/data HTTP/1.1\r\n"
+        "Host: localhost\r\n"
+        "Content-Length: 13\r\n"
+        "\r\n"
+        "Hello, World!";
+    
+    HTTPParser parser;
+    auto state = parser.parse(request, strlen(request));
+    
+    if (state == HTTPParser::State::Complete) {
+        auto& req = parser.getRequest();
+        std::cout << "Method: " << req.method << "\n";
+        std::cout << "URI: " << req.uri << "\n";
+        std::cout << "Version: " << req.version << "\n";
+        std::cout << "Body: " << req.body << "\n";
+    }
+}
+```
+
+### 練習 7: 實作 SO_BUSY_POLL 低延遲接收
+
+**需求:** 使用 busy polling 降低 socket 接收延遲。
+
+```cpp
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+
+class LowLatencyReceiver {
+    int socket_;
+    
+public:
+    bool init(uint16_t port, int busyPollUs = 50) {
+        socket_ = socket(AF_INET, SOCK_DGRAM, 0);
+        if (socket_ < 0) return false;
+        
+        // 啟用 SO_BUSY_POLL
+        if (setsockopt(socket_, SOL_SOCKET, SO_BUSY_POLL, 
+                       &busyPollUs, sizeof(busyPollUs)) < 0) {
+            perror("SO_BUSY_POLL");
+            // 繼續,可能不支持
+        }
+        
+        // 增大接收緩衝區
+        int bufSize = 4 * 1024 * 1024;
+        setsockopt(socket_, SOL_SOCKET, SO_RCVBUF, &bufSize, sizeof(bufSize));
+        
+        // 綁定
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = INADDR_ANY;
+        addr.sin_port = htons(port);
+        
+        if (bind(socket_, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    ~LowLatencyReceiver() {
+        if (socket_ >= 0) close(socket_);
+    }
+    
+    // 測量接收延遲
+    void measureLatency(int iterations) {
+        char buffer[1500];
+        std::vector<double> latencies;
+        latencies.reserve(iterations);
+        
+        for (int i = 0; i < iterations; ++i) {
+            // 假設發送方包含時間戳
+            ssize_t n = recv(socket_, buffer, sizeof(buffer), 0);
+            auto recvTime = std::chrono::high_resolution_clock::now();
+            
+            if (n > sizeof(uint64_t)) {
+                uint64_t sendTime;
+                std::memcpy(&sendTime, buffer, sizeof(sendTime));
+                
+                auto sendTimePoint = std::chrono::time_point<
+                    std::chrono::high_resolution_clock,
+                    std::chrono::nanoseconds>(
+                        std::chrono::nanoseconds(sendTime));
+                
+                auto latency = std::chrono::duration<double, std::micro>(
+                    recvTime - sendTimePoint).count();
+                
+                latencies.push_back(latency);
+            }
+        }
+        
+        // 統計
+        std::sort(latencies.begin(), latencies.end());
+        size_t n = latencies.size();
+        
+        std::cout << "Latency Statistics (μs):\n"
+                  << "  Min: " << latencies[0] << "\n"
+                  << "  P50: " << latencies[n/2] << "\n"
+                  << "  P99: " << latencies[n*99/100] << "\n"
+                  << "  Max: " << latencies[n-1] << "\n";
+    }
+};
+
+// 發送端 (需要另外運行)
+void sender(const char* destIp, uint16_t port, int count) {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    inet_pton(AF_INET, destIp, &addr.sin_addr);
+    
+    for (int i = 0; i < count; ++i) {
+        char buffer[64];
+        auto now = std::chrono::high_resolution_clock::now();
+        uint64_t timestamp = now.time_since_epoch().count();
+        
+        std::memcpy(buffer, &timestamp, sizeof(timestamp));
+        sendto(sock, buffer, sizeof(buffer), 0, 
+               (sockaddr*)&addr, sizeof(addr));
+        
+        usleep(1000);  // 1ms 間隔
+    }
+    
+    close(sock);
+}
+
+int main() {
+    LowLatencyReceiver receiver;
+    if (receiver.init(9999, 50)) {
+        std::cout << "Receiver started with SO_BUSY_POLL=50μs\n";
+        receiver.measureLatency(1000);
+    }
+}
+```
+
 ---
 
 ## 關鍵要點總結

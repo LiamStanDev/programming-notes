@@ -1255,6 +1255,985 @@ int main() {
 
 ---
 
+### 練習 4: 使用 std::optional 實現安全的查找
+
+**任務**: 實現一個安全的資料庫查詢模擬,使用 `std::optional` 處理查找失敗情況。
+
+```cpp
+#include <optional>
+#include <unordered_map>
+#include <string>
+#include <iostream>
+#include <vector>
+
+// 用戶資料
+struct User {
+    int id;
+    std::string name;
+    std::string email;
+    double balance;
+};
+
+// 模擬數據庫
+class UserDatabase {
+private:
+    std::unordered_map<int, User> users_;
+    std::unordered_map<std::string, int> email_index_;  // email -> user_id
+    
+public:
+    void addUser(const User& user) {
+        users_[user.id] = user;
+        email_index_[user.email] = user.id;
+    }
+    
+    // 按 ID 查找
+    std::optional<User> findById(int id) const {
+        auto it = users_.find(id);
+        if (it != users_.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+    
+    // 按 Email 查找
+    std::optional<User> findByEmail(const std::string& email) const {
+        auto it = email_index_.find(email);
+        if (it != email_index_.end()) {
+            return findById(it->second);
+        }
+        return std::nullopt;
+    }
+    
+    // 嘗試更新餘額
+    std::optional<double> updateBalance(int id, double amount) {
+        auto it = users_.find(id);
+        if (it == users_.end()) {
+            return std::nullopt;
+        }
+        
+        if (it->second.balance + amount < 0) {
+            return std::nullopt;  // 餘額不足
+        }
+        
+        it->second.balance += amount;
+        return it->second.balance;
+    }
+};
+
+int main() {
+    UserDatabase db;
+    
+    db.addUser({1, "Alice", "alice@example.com", 1000.0});
+    db.addUser({2, "Bob", "bob@example.com", 500.0});
+    
+    // 查找存在的用戶
+    if (auto user = db.findById(1)) {
+        std::cout << "Found: " << user->name 
+                  << ", Balance: $" << user->balance << "\n";
+    }
+    
+    // 查找不存在的用戶
+    auto notFound = db.findById(999);
+    std::cout << "User 999: " << notFound.value_or(User{0, "Unknown", "", 0}).name << "\n";
+    
+    // 按 Email 查找
+    if (auto user = db.findByEmail("bob@example.com")) {
+        std::cout << "Found by email: " << user->name << "\n";
+    }
+    
+    // 更新餘額
+    if (auto newBalance = db.updateBalance(1, -200)) {
+        std::cout << "New balance for Alice: $" << *newBalance << "\n";
+    }
+    
+    // 嘗試透支
+    if (auto result = db.updateBalance(2, -1000)) {
+        std::cout << "Withdrawal successful\n";
+    } else {
+        std::cout << "Insufficient funds\n";
+    }
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 5: 使用 string_view 優化字串解析
+
+**任務**: 使用 `std::string_view` 實現高效的 CSV 解析器。
+
+```cpp
+#include <string_view>
+#include <vector>
+#include <iostream>
+#include <string>
+#include <charconv>
+
+class CSVParser {
+public:
+    // 解析一行 CSV,返回字段視圖 (零拷貝)
+    static std::vector<std::string_view> parseLine(std::string_view line) {
+        std::vector<std::string_view> fields;
+        
+        size_t start = 0;
+        while (start < line.size()) {
+            size_t end = line.find(',', start);
+            if (end == std::string_view::npos) {
+                end = line.size();
+            }
+            
+            // 去除首尾空格
+            auto field = line.substr(start, end - start);
+            field = trim(field);
+            
+            fields.push_back(field);
+            start = end + 1;
+        }
+        
+        return fields;
+    }
+    
+    // 安全地解析數字
+    static std::optional<double> parseDouble(std::string_view sv) {
+        double value;
+        auto result = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+        if (result.ec == std::errc()) {
+            return value;
+        }
+        return std::nullopt;
+    }
+    
+    static std::optional<int> parseInt(std::string_view sv) {
+        int value;
+        auto result = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+        if (result.ec == std::errc()) {
+            return value;
+        }
+        return std::nullopt;
+    }
+    
+private:
+    static std::string_view trim(std::string_view sv) {
+        size_t start = 0;
+        while (start < sv.size() && std::isspace(sv[start])) ++start;
+        
+        size_t end = sv.size();
+        while (end > start && std::isspace(sv[end - 1])) --end;
+        
+        return sv.substr(start, end - start);
+    }
+};
+
+// 市場數據結構
+struct MarketData {
+    std::string symbol;
+    double bid;
+    double ask;
+    int volume;
+};
+
+// 解析市場數據 CSV
+std::optional<MarketData> parseMarketData(std::string_view line) {
+    auto fields = CSVParser::parseLine(line);
+    
+    if (fields.size() != 4) {
+        return std::nullopt;
+    }
+    
+    auto bid = CSVParser::parseDouble(fields[1]);
+    auto ask = CSVParser::parseDouble(fields[2]);
+    auto volume = CSVParser::parseInt(fields[3]);
+    
+    if (!bid || !ask || !volume) {
+        return std::nullopt;
+    }
+    
+    return MarketData{
+        std::string(fields[0]),
+        *bid,
+        *ask,
+        *volume
+    };
+}
+
+int main() {
+    // 模擬 CSV 數據
+    std::vector<std::string> csvData = {
+        "AAPL, 150.00, 150.05, 1000",
+        "GOOGL, 2800.50, 2801.00, 500",
+        "MSFT, 299.95, 300.00, 750",
+        "INVALID, abc, 100.00, xyz"  // 無效數據
+    };
+    
+    std::cout << "Parsing market data:\n";
+    
+    for (const auto& line : csvData) {
+        if (auto data = parseMarketData(line)) {
+            std::cout << "Symbol: " << data->symbol
+                      << ", Bid: " << data->bid
+                      << ", Ask: " << data->ask
+                      << ", Volume: " << data->volume << "\n";
+        } else {
+            std::cout << "Failed to parse: " << line << "\n";
+        }
+    }
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 6: 使用 Concepts 約束模板
+
+**任務**: 使用 C++20 Concepts 實現類型安全的金融計算庫。
+
+```cpp
+#include <concepts>
+#include <iostream>
+#include <string>
+#include <cmath>
+
+// 定義可交易資產的 Concept
+template<typename T>
+concept Tradable = requires(T asset) {
+    { asset.getSymbol() } -> std::convertible_to<std::string>;
+    { asset.getPrice() } -> std::floating_point;
+    { asset.getQuantity() } -> std::integral;
+};
+
+// 定義期權的 Concept
+template<typename T>
+concept Option = Tradable<T> && requires(T opt) {
+    { opt.getStrike() } -> std::floating_point;
+    { opt.getExpiry() } -> std::convertible_to<double>;
+    { opt.isCall() } -> std::same_as<bool>;
+};
+
+// 股票類
+class Stock {
+public:
+    Stock(std::string symbol, double price, int quantity)
+        : symbol_(std::move(symbol)), price_(price), quantity_(quantity) {}
+    
+    std::string getSymbol() const { return symbol_; }
+    double getPrice() const { return price_; }
+    int getQuantity() const { return quantity_; }
+    
+private:
+    std::string symbol_;
+    double price_;
+    int quantity_;
+};
+
+// 期權類
+class StockOption {
+public:
+    StockOption(std::string symbol, double price, int quantity,
+                double strike, double expiry, bool isCall)
+        : symbol_(std::move(symbol)), price_(price), quantity_(quantity),
+          strike_(strike), expiry_(expiry), isCall_(isCall) {}
+    
+    std::string getSymbol() const { return symbol_; }
+    double getPrice() const { return price_; }
+    int getQuantity() const { return quantity_; }
+    double getStrike() const { return strike_; }
+    double getExpiry() const { return expiry_; }
+    bool isCall() const { return isCall_; }
+    
+private:
+    std::string symbol_;
+    double price_;
+    int quantity_;
+    double strike_;
+    double expiry_;
+    bool isCall_;
+};
+
+// 使用 Concept 約束的函數
+template<Tradable T>
+double calculateNotional(const T& asset) {
+    return asset.getPrice() * asset.getQuantity();
+}
+
+template<Option T>
+double calculateIntrinsicValue(const T& opt, double spotPrice) {
+    if (opt.isCall()) {
+        return std::max(0.0, spotPrice - opt.getStrike());
+    } else {
+        return std::max(0.0, opt.getStrike() - spotPrice);
+    }
+}
+
+// 僅適用於浮點數的數學函數
+template<std::floating_point T>
+T blackScholesD1(T spot, T strike, T rate, T vol, T time) {
+    return (std::log(spot / strike) + (rate + vol * vol / 2) * time) 
+           / (vol * std::sqrt(time));
+}
+
+int main() {
+    Stock stock("AAPL", 150.0, 100);
+    StockOption option("AAPL", 5.0, 10, 155.0, 0.25, true);
+    
+    std::cout << "Stock notional: $" << calculateNotional(stock) << "\n";
+    std::cout << "Option notional: $" << calculateNotional(option) << "\n";
+    
+    double spotPrice = 160.0;
+    std::cout << "Option intrinsic value: $" 
+              << calculateIntrinsicValue(option, spotPrice) << "\n";
+    
+    // Black-Scholes d1
+    double d1 = blackScholesD1(150.0, 155.0, 0.05, 0.2, 0.25);
+    std::cout << "Black-Scholes d1: " << d1 << "\n";
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 7: 使用 Ranges 處理數據流
+
+**任務**: 使用 C++20 Ranges 庫實現數據處理管道。
+
+```cpp
+#include <ranges>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <numeric>
+#include <string>
+
+namespace rng = std::ranges;
+namespace views = std::views;
+
+// 交易記錄
+struct Trade {
+    std::string symbol;
+    double price;
+    int quantity;
+    bool isBuy;
+    long timestamp;
+};
+
+// 使用 Ranges 進行數據分析
+class TradeAnalyzer {
+public:
+    explicit TradeAnalyzer(std::vector<Trade> trades)
+        : trades_(std::move(trades)) {}
+    
+    // 計算總成交量
+    int totalVolume() const {
+        return std::accumulate(trades_.begin(), trades_.end(), 0,
+            [](int sum, const Trade& t) { return sum + t.quantity; });
+    }
+    
+    // 獲取特定股票的交易
+    auto tradesForSymbol(const std::string& symbol) const {
+        return trades_ | views::filter([symbol](const Trade& t) {
+            return t.symbol == symbol;
+        });
+    }
+    
+    // 計算 VWAP (Volume Weighted Average Price)
+    double calculateVWAP(const std::string& symbol) const {
+        auto symbolTrades = trades_ | views::filter([&](const Trade& t) {
+            return t.symbol == symbol;
+        });
+        
+        double totalValue = 0;
+        int totalVolume = 0;
+        
+        for (const auto& trade : symbolTrades) {
+            totalValue += trade.price * trade.quantity;
+            totalVolume += trade.quantity;
+        }
+        
+        return totalVolume > 0 ? totalValue / totalVolume : 0;
+    }
+    
+    // 獲取前 N 大交易
+    std::vector<Trade> topNByVolume(int n) const {
+        std::vector<Trade> sorted = trades_;
+        rng::partial_sort(sorted, sorted.begin() + n, 
+            [](const Trade& a, const Trade& b) {
+                return a.quantity > b.quantity;
+            });
+        
+        return std::vector<Trade>(sorted.begin(), sorted.begin() + n);
+    }
+    
+    // 獲取時間範圍內的交易
+    auto tradesInTimeRange(long start, long end) const {
+        return trades_ | views::filter([=](const Trade& t) {
+            return t.timestamp >= start && t.timestamp <= end;
+        });
+    }
+    
+    // 轉換為價值列表
+    auto tradeValues() const {
+        return trades_ | views::transform([](const Trade& t) {
+            return t.price * t.quantity;
+        });
+    }
+    
+private:
+    std::vector<Trade> trades_;
+};
+
+int main() {
+    std::vector<Trade> trades = {
+        {"AAPL", 150.0, 100, true, 1000},
+        {"AAPL", 150.5, 200, false, 1001},
+        {"GOOGL", 2800.0, 50, true, 1002},
+        {"AAPL", 149.5, 300, true, 1003},
+        {"MSFT", 300.0, 150, false, 1004},
+        {"AAPL", 151.0, 250, true, 1005}
+    };
+    
+    TradeAnalyzer analyzer(trades);
+    
+    // VWAP 計算
+    std::cout << "AAPL VWAP: $" << analyzer.calculateVWAP("AAPL") << "\n";
+    
+    // 總成交量
+    std::cout << "Total volume: " << analyzer.totalVolume() << "\n";
+    
+    // 前 3 大交易
+    std::cout << "\nTop 3 trades by volume:\n";
+    for (const auto& trade : analyzer.topNByVolume(3)) {
+        std::cout << "  " << trade.symbol << ": " << trade.quantity << " shares\n";
+    }
+    
+    // 特定股票的交易
+    std::cout << "\nAAPL trades:\n";
+    for (const auto& trade : analyzer.tradesForSymbol("AAPL")) {
+        std::cout << "  Price: $" << trade.price 
+                  << ", Qty: " << trade.quantity << "\n";
+    }
+    
+    // 使用管道計算總交易額
+    auto values = analyzer.tradeValues();
+    double totalValue = std::accumulate(values.begin(), values.end(), 0.0);
+    std::cout << "\nTotal trade value: $" << totalValue << "\n";
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 8: 實現 RAII 資源守衛
+
+**任務**: 實現通用的 RAII 資源守衛類,支援自定義清理操作。
+
+```cpp
+#include <iostream>
+#include <functional>
+#include <utility>
+
+// 通用資源守衛
+template<typename CleanupFunc>
+class ScopeGuard {
+private:
+    CleanupFunc cleanup_;
+    bool active_ = true;
+    
+public:
+    explicit ScopeGuard(CleanupFunc func)
+        : cleanup_(std::move(func)) {}
+    
+    ~ScopeGuard() {
+        if (active_) {
+            cleanup_();
+        }
+    }
+    
+    // 禁止拷貝
+    ScopeGuard(const ScopeGuard&) = delete;
+    ScopeGuard& operator=(const ScopeGuard&) = delete;
+    
+    // 支持移動
+    ScopeGuard(ScopeGuard&& other) noexcept
+        : cleanup_(std::move(other.cleanup_)), active_(other.active_) {
+        other.active_ = false;
+    }
+    
+    // 取消清理
+    void dismiss() { active_ = false; }
+    
+    // 立即執行清理
+    void execute() {
+        if (active_) {
+            cleanup_();
+            active_ = false;
+        }
+    }
+};
+
+// 輔助函數
+template<typename F>
+auto makeScopeGuard(F&& f) {
+    return ScopeGuard<std::decay_t<F>>(std::forward<F>(f));
+}
+
+// 使用宏簡化 (可選)
+#define SCOPE_EXIT auto CONCAT(scope_exit_, __LINE__) = makeScopeGuard
+#define CONCAT_IMPL(a, b) a##b
+#define CONCAT(a, b) CONCAT_IMPL(a, b)
+
+// 模擬資源
+class Connection {
+public:
+    explicit Connection(const std::string& name) : name_(name) {
+        std::cout << "Opening connection: " << name_ << "\n";
+    }
+    
+    void close() {
+        std::cout << "Closing connection: " << name_ << "\n";
+    }
+    
+    void send(const std::string& data) {
+        std::cout << "Sending via " << name_ << ": " << data << "\n";
+    }
+    
+private:
+    std::string name_;
+};
+
+// 使用示例
+void processData() {
+    Connection conn("Database");
+    
+    // 確保連接在退出時關閉
+    auto guard = makeScopeGuard([&conn]() {
+        conn.close();
+    });
+    
+    conn.send("SELECT * FROM orders");
+    
+    // 模擬錯誤
+    bool hasError = false;
+    if (hasError) {
+        throw std::runtime_error("Processing failed");
+    }
+    
+    conn.send("UPDATE orders SET status = 'processed'");
+    
+    // guard 會在退出時自動調用 conn.close()
+}
+
+// 事務模擬
+class Transaction {
+public:
+    void begin() { std::cout << "Transaction started\n"; }
+    void commit() { std::cout << "Transaction committed\n"; committed_ = true; }
+    void rollback() { std::cout << "Transaction rolled back\n"; }
+    bool isCommitted() const { return committed_; }
+    
+private:
+    bool committed_ = false;
+};
+
+void performTransaction() {
+    Transaction tx;
+    tx.begin();
+    
+    auto guard = makeScopeGuard([&tx]() {
+        if (!tx.isCommitted()) {
+            tx.rollback();
+        }
+    });
+    
+    // 執行操作...
+    std::cout << "Performing operations...\n";
+    
+    // 成功則提交
+    tx.commit();
+    
+    // 如果到這裡,guard 的 rollback 不會執行
+    // 因為 isCommitted() 返回 true
+}
+
+int main() {
+    std::cout << "=== Basic scope guard ===\n";
+    processData();
+    
+    std::cout << "\n=== Transaction with guard ===\n";
+    performTransaction();
+    
+    std::cout << "\n=== Guard with dismiss ===\n";
+    {
+        auto guard = makeScopeGuard([]() {
+            std::cout << "This should not print\n";
+        });
+        
+        guard.dismiss();  // 取消清理
+    }
+    std::cout << "Guard dismissed\n";
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 9: 使用 span 實現零拷貝緩衝區
+
+**任務**: 使用 `std::span` 實現高效的消息緩衝區處理。
+
+```cpp
+#include <span>
+#include <vector>
+#include <array>
+#include <iostream>
+#include <cstring>
+#include <cstdint>
+
+// 消息頭
+struct MessageHeader {
+    uint32_t type;
+    uint32_t length;
+    uint64_t timestamp;
+};
+
+// 消息解析器 (零拷貝)
+class MessageParser {
+public:
+    // 從緩衝區解析消息頭
+    static std::optional<MessageHeader> parseHeader(std::span<const std::byte> buffer) {
+        if (buffer.size() < sizeof(MessageHeader)) {
+            return std::nullopt;
+        }
+        
+        MessageHeader header;
+        std::memcpy(&header, buffer.data(), sizeof(MessageHeader));
+        return header;
+    }
+    
+    // 獲取消息體
+    static std::span<const std::byte> getBody(std::span<const std::byte> buffer) {
+        if (buffer.size() <= sizeof(MessageHeader)) {
+            return {};
+        }
+        return buffer.subspan(sizeof(MessageHeader));
+    }
+    
+    // 解析整數
+    template<std::integral T>
+    static std::optional<T> parseInteger(std::span<const std::byte> buffer, size_t offset = 0) {
+        if (offset + sizeof(T) > buffer.size()) {
+            return std::nullopt;
+        }
+        
+        T value;
+        std::memcpy(&value, buffer.data() + offset, sizeof(T));
+        return value;
+    }
+};
+
+// 環形緩衝區
+template<size_t Size>
+class RingBuffer {
+private:
+    std::array<std::byte, Size> buffer_;
+    size_t head_ = 0;
+    size_t tail_ = 0;
+    size_t count_ = 0;
+    
+public:
+    // 寫入數據
+    bool write(std::span<const std::byte> data) {
+        if (data.size() > available()) {
+            return false;
+        }
+        
+        for (auto byte : data) {
+            buffer_[tail_] = byte;
+            tail_ = (tail_ + 1) % Size;
+            ++count_;
+        }
+        return true;
+    }
+    
+    // 讀取數據到輸出緩衝區
+    size_t read(std::span<std::byte> output) {
+        size_t toRead = std::min(output.size(), count_);
+        
+        for (size_t i = 0; i < toRead; ++i) {
+            output[i] = buffer_[head_];
+            head_ = (head_ + 1) % Size;
+            --count_;
+        }
+        
+        return toRead;
+    }
+    
+    // 獲取可讀視圖 (不移除數據)
+    std::span<const std::byte> peek(size_t maxSize) const {
+        size_t available = std::min(maxSize, count_);
+        size_t contiguous = std::min(available, Size - head_);
+        return std::span<const std::byte>(buffer_.data() + head_, contiguous);
+    }
+    
+    size_t available() const { return Size - count_; }
+    size_t size() const { return count_; }
+    bool empty() const { return count_ == 0; }
+};
+
+int main() {
+    // 創建測試消息
+    std::vector<std::byte> rawMessage(sizeof(MessageHeader) + 8);
+    
+    MessageHeader header{1, 8, 1234567890};
+    std::memcpy(rawMessage.data(), &header, sizeof(header));
+    
+    uint64_t payload = 42;
+    std::memcpy(rawMessage.data() + sizeof(header), &payload, sizeof(payload));
+    
+    // 使用 span 解析
+    std::span<const std::byte> messageSpan(rawMessage);
+    
+    if (auto hdr = MessageParser::parseHeader(messageSpan)) {
+        std::cout << "Message type: " << hdr->type << "\n";
+        std::cout << "Message length: " << hdr->length << "\n";
+        std::cout << "Timestamp: " << hdr->timestamp << "\n";
+        
+        auto body = MessageParser::getBody(messageSpan);
+        if (auto value = MessageParser::parseInteger<uint64_t>(body)) {
+            std::cout << "Payload: " << *value << "\n";
+        }
+    }
+    
+    // 測試環形緩衝區
+    std::cout << "\n=== Ring Buffer Test ===\n";
+    RingBuffer<64> ring;
+    
+    std::array<std::byte, 16> testData;
+    for (size_t i = 0; i < testData.size(); ++i) {
+        testData[i] = static_cast<std::byte>(i);
+    }
+    
+    ring.write(testData);
+    std::cout << "Written " << testData.size() << " bytes\n";
+    std::cout << "Buffer size: " << ring.size() << "\n";
+    
+    auto peeked = ring.peek(8);
+    std::cout << "Peeked " << peeked.size() << " bytes\n";
+    
+    std::array<std::byte, 8> output;
+    size_t read = ring.read(output);
+    std::cout << "Read " << read << " bytes\n";
+    std::cout << "Remaining: " << ring.size() << " bytes\n";
+    
+    return 0;
+}
+```
+
+---
+
+### 練習 10: 綜合練習 - 訂單管理系統
+
+**任務**: 結合本課所學,實現一個小型訂單管理系統。
+
+```cpp
+#include <variant>
+#include <optional>
+#include <string_view>
+#include <span>
+#include <unordered_map>
+#include <vector>
+#include <iostream>
+#include <memory>
+#include <chrono>
+
+// 訂單類型
+enum class OrderType { MARKET, LIMIT };
+enum class OrderSide { BUY, SELL };
+enum class OrderStatus { NEW, FILLED, CANCELLED, REJECTED };
+
+// 訂單結構
+struct Order {
+    int id;
+    std::string symbol;
+    OrderType type;
+    OrderSide side;
+    double price;
+    int quantity;
+    int filledQty = 0;
+    OrderStatus status = OrderStatus::NEW;
+    
+    double filledValue = 0.0;
+    
+    bool isFilled() const { return filledQty >= quantity; }
+    double avgPrice() const { return filledQty > 0 ? filledValue / filledQty : 0; }
+};
+
+// 事件類型
+struct OrderAccepted { int orderId; };
+struct OrderRejected { int orderId; std::string reason; };
+struct OrderFilled { int orderId; int qty; double price; };
+struct OrderCancelled { int orderId; };
+
+using OrderEvent = std::variant<OrderAccepted, OrderRejected, OrderFilled, OrderCancelled>;
+
+// 訂單管理器
+class OrderManager {
+private:
+    std::unordered_map<int, Order> orders_;
+    std::vector<OrderEvent> events_;
+    int nextOrderId_ = 1000;
+    
+public:
+    // 提交訂單
+    std::optional<int> submitOrder(std::string_view symbol, OrderType type,
+                                   OrderSide side, double price, int quantity) {
+        if (quantity <= 0) {
+            return std::nullopt;
+        }
+        
+        int orderId = nextOrderId_++;
+        Order order{
+            orderId,
+            std::string(symbol),
+            type,
+            side,
+            price,
+            quantity
+        };
+        
+        orders_[orderId] = std::move(order);
+        events_.push_back(OrderAccepted{orderId});
+        
+        return orderId;
+    }
+    
+    // 取消訂單
+    bool cancelOrder(int orderId) {
+        auto it = orders_.find(orderId);
+        if (it == orders_.end() || it->second.status != OrderStatus::NEW) {
+            return false;
+        }
+        
+        it->second.status = OrderStatus::CANCELLED;
+        events_.push_back(OrderCancelled{orderId});
+        return true;
+    }
+    
+    // 成交回報
+    bool fillOrder(int orderId, int qty, double price) {
+        auto it = orders_.find(orderId);
+        if (it == orders_.end() || it->second.status != OrderStatus::NEW) {
+            return false;
+        }
+        
+        auto& order = it->second;
+        int actualQty = std::min(qty, order.quantity - order.filledQty);
+        
+        order.filledQty += actualQty;
+        order.filledValue += actualQty * price;
+        
+        if (order.isFilled()) {
+            order.status = OrderStatus::FILLED;
+        }
+        
+        events_.push_back(OrderFilled{orderId, actualQty, price});
+        return true;
+    }
+    
+    // 查詢訂單
+    std::optional<Order> getOrder(int orderId) const {
+        auto it = orders_.find(orderId);
+        if (it != orders_.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+    
+    // 獲取所有事件
+    std::span<const OrderEvent> getEvents() const {
+        return events_;
+    }
+    
+    // 清除事件
+    void clearEvents() {
+        events_.clear();
+    }
+};
+
+// 事件處理器
+class EventProcessor {
+public:
+    void operator()(const OrderAccepted& e) {
+        std::cout << "Order " << e.orderId << " accepted\n";
+    }
+    
+    void operator()(const OrderRejected& e) {
+        std::cout << "Order " << e.orderId << " rejected: " << e.reason << "\n";
+    }
+    
+    void operator()(const OrderFilled& e) {
+        std::cout << "Order " << e.orderId << " filled " 
+                  << e.qty << " @ " << e.price << "\n";
+    }
+    
+    void operator()(const OrderCancelled& e) {
+        std::cout << "Order " << e.orderId << " cancelled\n";
+    }
+};
+
+int main() {
+    OrderManager manager;
+    EventProcessor processor;
+    
+    // 提交訂單
+    auto orderId1 = manager.submitOrder("AAPL", OrderType::LIMIT, 
+                                        OrderSide::BUY, 150.0, 100);
+    auto orderId2 = manager.submitOrder("GOOGL", OrderType::MARKET,
+                                        OrderSide::SELL, 0, 50);
+    
+    // 處理事件
+    std::cout << "=== Initial Events ===\n";
+    for (const auto& event : manager.getEvents()) {
+        std::visit(processor, event);
+    }
+    manager.clearEvents();
+    
+    // 成交
+    if (orderId1) {
+        manager.fillOrder(*orderId1, 50, 149.95);
+        manager.fillOrder(*orderId1, 50, 150.05);
+    }
+    
+    // 取消
+    if (orderId2) {
+        manager.cancelOrder(*orderId2);
+    }
+    
+    // 處理新事件
+    std::cout << "\n=== Trading Events ===\n";
+    for (const auto& event : manager.getEvents()) {
+        std::visit(processor, event);
+    }
+    
+    // 查詢訂單狀態
+    std::cout << "\n=== Order Status ===\n";
+    if (orderId1) {
+        if (auto order = manager.getOrder(*orderId1)) {
+            std::cout << "Order " << order->id << ": "
+                      << order->filledQty << "/" << order->quantity
+                      << " filled, avg price: $" << order->avgPrice() << "\n";
+        }
+    }
+    
+    return 0;
+}
+```
+
+---
+
 ## 關鍵要點總結
 
 ### C++17/20 特性選擇

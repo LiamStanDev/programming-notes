@@ -1130,6 +1130,405 @@ void print_breakdown(const LatencyBreakdown& lb) {
 }
 ```
 
+### 練習 5: io_uring 批量操作優化
+
+**需求:** 使用 io_uring 批量提交多個 I/O 請求,測量性能提升。
+
+```cpp
+#include <liburing.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <chrono>
+#include <vector>
+#include <iostream>
+
+class BatchIOUring {
+    io_uring ring_;
+    static constexpr int QUEUE_DEPTH = 1024;
+    
+public:
+    BatchIOUring() {
+        io_uring_params params{};
+        // 使用 SQPOLL 進一步減少系統調用
+        // params.flags = IORING_SETUP_SQPOLL;
+        // params.sq_thread_idle = 2000;
+        
+        io_uring_queue_init_params(QUEUE_DEPTH, &ring_, &params);
+    }
+    
+    ~BatchIOUring() {
+        io_uring_queue_exit(&ring_);
+    }
+    
+    // 批量讀取多個文件
+    void batchRead(const std::vector<int>& fds, 
+                   std::vector<std::vector<char>>& buffers) {
+        // 提交所有讀取請求
+        for (size_t i = 0; i < fds.size(); ++i) {
+            io_uring_sqe* sqe = io_uring_get_sqe(&ring_);
+            io_uring_prep_read(sqe, fds[i], buffers[i].data(), 
+                               buffers[i].size(), 0);
+            sqe->user_data = i;  // 用於識別完成的請求
+        }
+        
+        // 一次提交所有請求
+        io_uring_submit(&ring_);
+        
+        // 等待所有完成
+        for (size_t i = 0; i < fds.size(); ++i) {
+            io_uring_cqe* cqe;
+            io_uring_wait_cqe(&ring_, &cqe);
+            
+            // 處理完成
+            if (cqe->res < 0) {
+                std::cerr << "Read " << cqe->user_data 
+                          << " failed: " << strerror(-cqe->res) << "\n";
+            }
+            
+            io_uring_cqe_seen(&ring_, cqe);
+        }
+    }
+    
+    // 對比單一提交 vs 批量提交
+    void benchmark() {
+        // 創建測試文件
+        constexpr int NUM_FILES = 100;
+        constexpr size_t BUFFER_SIZE = 4096;
+        
+        std::vector<int> fds;
+        std::vector<std::vector<char>> buffers(NUM_FILES, 
+                                                std::vector<char>(BUFFER_SIZE));
+        
+        for (int i = 0; i < NUM_FILES; ++i) {
+            std::string filename = "/tmp/test_" + std::to_string(i);
+            int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0644);
+            if (fd >= 0) {
+                // 寫入測試數據
+                write(fd, buffers[i].data(), BUFFER_SIZE);
+                lseek(fd, 0, SEEK_SET);
+                fds.push_back(fd);
+            }
+        }
+        
+        // 批量讀取測試
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        for (int iter = 0; iter < 1000; ++iter) {
+            batchRead(fds, buffers);
+        }
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            end - start).count();
+        
+        std::cout << "Batch io_uring: " << duration << " ms for "
+                  << (1000 * NUM_FILES) << " reads\n"
+                  << "Throughput: " << (1000.0 * NUM_FILES * 1000 / duration) 
+                  << " ops/sec\n";
+        
+        // 清理
+        for (int fd : fds) close(fd);
+    }
+};
+
+int main() {
+    BatchIOUring io;
+    io.benchmark();
+}
+```
+
+### 練習 6: 硬體時間戳獲取
+
+**需求:** 使用網卡硬體時間戳獲取精確的報文時間。
+
+```cpp
+#include <sys/socket.h>
+#include <linux/net_tstamp.h>
+#include <linux/sockios.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <cstring>
+#include <iostream>
+
+class HardwareTimestamp {
+    int socket_;
+    
+public:
+    bool init(uint16_t port) {
+        socket_ = socket(AF_INET, SOCK_DGRAM, 0);
+        if (socket_ < 0) return false;
+        
+        // 啟用硬體時間戳
+        int flags = SOF_TIMESTAMPING_RX_HARDWARE |
+                    SOF_TIMESTAMPING_TX_HARDWARE |
+                    SOF_TIMESTAMPING_RAW_HARDWARE |
+                    SOF_TIMESTAMPING_SOFTWARE;
+        
+        if (setsockopt(socket_, SOL_SOCKET, SO_TIMESTAMPING, 
+                       &flags, sizeof(flags)) < 0) {
+            perror("SO_TIMESTAMPING (may not be supported)");
+        }
+        
+        // 綁定
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = INADDR_ANY;
+        addr.sin_port = htons(port);
+        
+        if (bind(socket_, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    ~HardwareTimestamp() {
+        if (socket_ >= 0) close(socket_);
+    }
+    
+    void receive() {
+        char data[1500];
+        char control[CMSG_SPACE(sizeof(struct scm_timestamping))];
+        
+        iovec iov;
+        iov.iov_base = data;
+        iov.iov_len = sizeof(data);
+        
+        msghdr msg{};
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = control;
+        msg.msg_controllen = sizeof(control);
+        
+        ssize_t len = recvmsg(socket_, &msg, 0);
+        if (len < 0) return;
+        
+        // 解析時間戳
+        for (cmsghdr* cmsg = CMSG_FIRSTHDR(&msg); 
+             cmsg != nullptr; 
+             cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+            
+            if (cmsg->cmsg_level == SOL_SOCKET &&
+                cmsg->cmsg_type == SCM_TIMESTAMPING) {
+                
+                auto* ts = (struct scm_timestamping*)CMSG_DATA(cmsg);
+                
+                std::cout << "SW timestamp: " 
+                          << ts->ts[0].tv_sec << "."
+                          << ts->ts[0].tv_nsec << "\n";
+                
+                std::cout << "HW timestamp: " 
+                          << ts->ts[2].tv_sec << "."
+                          << ts->ts[2].tv_nsec << "\n";
+            }
+        }
+    }
+};
+
+// 檢查網卡是否支持硬體時間戳
+void checkHWTimestampSupport(const char* ifname) {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    
+    hwtstamp_config config{};
+    ifreq ifr{};
+    strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
+    ifr.ifr_data = (char*)&config;
+    
+    if (ioctl(sock, SIOCGHWTSTAMP, &ifr) < 0) {
+        perror("SIOCGHWTSTAMP");
+        std::cout << "Hardware timestamping may not be supported on " 
+                  << ifname << "\n";
+    } else {
+        std::cout << "Hardware timestamping supported on " << ifname << "\n";
+        std::cout << "  TX type: " << config.tx_type << "\n";
+        std::cout << "  RX filter: " << config.rx_filter << "\n";
+    }
+    
+    close(sock);
+}
+
+int main() {
+    // 檢查支持
+    checkHWTimestampSupport("eth0");
+    
+    // 接收測試
+    HardwareTimestamp receiver;
+    if (receiver.init(9999)) {
+        std::cout << "Waiting for packets...\n";
+        for (int i = 0; i < 10; ++i) {
+            receiver.receive();
+        }
+    }
+}
+```
+
+### 練習 7: 實作延遲直方圖統計
+
+**需求:** 實作高效的延遲直方圖統計器,用於分析延遲分布。
+
+```cpp
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <iostream>
+#include <iomanip>
+
+class LatencyHistogram {
+public:
+    // 對數直方圖: bucket[i] 表示 [2^i, 2^(i+1)) ns 範圍
+    static constexpr int NUM_BUCKETS = 32;
+    
+private:
+    std::array<std::atomic<uint64_t>, NUM_BUCKETS> buckets_;
+    std::atomic<uint64_t> count_{0};
+    std::atomic<uint64_t> sum_{0};
+    std::atomic<uint64_t> min_{UINT64_MAX};
+    std::atomic<uint64_t> max_{0};
+    
+    int getBucket(uint64_t latency_ns) const {
+        if (latency_ns == 0) return 0;
+        
+        // 使用 __builtin_clzll 快速計算 log2
+        int bucket = 63 - __builtin_clzll(latency_ns);
+        return std::min(bucket, NUM_BUCKETS - 1);
+    }
+    
+public:
+    LatencyHistogram() {
+        for (auto& bucket : buckets_) {
+            bucket.store(0, std::memory_order_relaxed);
+        }
+    }
+    
+    void record(uint64_t latency_ns) {
+        int bucket = getBucket(latency_ns);
+        buckets_[bucket].fetch_add(1, std::memory_order_relaxed);
+        
+        count_.fetch_add(1, std::memory_order_relaxed);
+        sum_.fetch_add(latency_ns, std::memory_order_relaxed);
+        
+        // 更新 min/max
+        uint64_t current_min = min_.load(std::memory_order_relaxed);
+        while (latency_ns < current_min &&
+               !min_.compare_exchange_weak(current_min, latency_ns,
+                                           std::memory_order_relaxed));
+        
+        uint64_t current_max = max_.load(std::memory_order_relaxed);
+        while (latency_ns > current_max &&
+               !max_.compare_exchange_weak(current_max, latency_ns,
+                                           std::memory_order_relaxed));
+    }
+    
+    void printStats() const {
+        uint64_t count = count_.load(std::memory_order_relaxed);
+        if (count == 0) {
+            std::cout << "No samples recorded\n";
+            return;
+        }
+        
+        uint64_t sum = sum_.load(std::memory_order_relaxed);
+        uint64_t min_val = min_.load(std::memory_order_relaxed);
+        uint64_t max_val = max_.load(std::memory_order_relaxed);
+        
+        std::cout << "Latency Statistics:\n"
+                  << "  Count: " << count << "\n"
+                  << "  Mean:  " << sum / count << " ns\n"
+                  << "  Min:   " << min_val << " ns\n"
+                  << "  Max:   " << max_val << " ns\n";
+    }
+    
+    void printHistogram() const {
+        uint64_t count = count_.load(std::memory_order_relaxed);
+        if (count == 0) return;
+        
+        std::cout << "\nLatency Distribution:\n";
+        std::cout << std::setw(20) << "Range (ns)" 
+                  << std::setw(10) << "Count" 
+                  << std::setw(10) << "%" 
+                  << " Histogram\n";
+        
+        for (int i = 0; i < NUM_BUCKETS; ++i) {
+            uint64_t bucket_count = buckets_[i].load(std::memory_order_relaxed);
+            if (bucket_count == 0) continue;
+            
+            uint64_t low = (i == 0) ? 0 : (1ULL << i);
+            uint64_t high = (1ULL << (i + 1)) - 1;
+            
+            double pct = 100.0 * bucket_count / count;
+            int bars = static_cast<int>(pct / 2);
+            
+            std::cout << std::setw(8) << low << " - " 
+                      << std::setw(8) << high
+                      << std::setw(10) << bucket_count
+                      << std::setw(9) << std::fixed << std::setprecision(1) << pct
+                      << "% " << std::string(bars, '#') << "\n";
+        }
+    }
+    
+    // 計算百分位數
+    uint64_t percentile(double p) const {
+        uint64_t count = count_.load(std::memory_order_relaxed);
+        uint64_t target = static_cast<uint64_t>(count * p / 100.0);
+        
+        uint64_t cumulative = 0;
+        for (int i = 0; i < NUM_BUCKETS; ++i) {
+            cumulative += buckets_[i].load(std::memory_order_relaxed);
+            if (cumulative >= target) {
+                // 返回 bucket 的中點
+                return (1ULL << i) + (1ULL << (i - 1));
+            }
+        }
+        return max_.load(std::memory_order_relaxed);
+    }
+    
+    void printPercentiles() const {
+        std::cout << "\nPercentiles:\n"
+                  << "  P50:   " << percentile(50) << " ns\n"
+                  << "  P90:   " << percentile(90) << " ns\n"
+                  << "  P99:   " << percentile(99) << " ns\n"
+                  << "  P99.9: " << percentile(99.9) << " ns\n";
+    }
+    
+    void reset() {
+        for (auto& bucket : buckets_) {
+            bucket.store(0, std::memory_order_relaxed);
+        }
+        count_.store(0, std::memory_order_relaxed);
+        sum_.store(0, std::memory_order_relaxed);
+        min_.store(UINT64_MAX, std::memory_order_relaxed);
+        max_.store(0, std::memory_order_relaxed);
+    }
+};
+
+// 測試
+int main() {
+    LatencyHistogram hist;
+    
+    // 模擬延遲數據
+    for (int i = 0; i < 100000; ++i) {
+        // 大多數請求快速完成
+        uint64_t latency = 1000 + (rand() % 1000);
+        
+        // 偶爾有慢請求
+        if (rand() % 100 == 0) {
+            latency += rand() % 10000;
+        }
+        
+        // 極少數極慢請求
+        if (rand() % 1000 == 0) {
+            latency += rand() % 100000;
+        }
+        
+        hist.record(latency);
+    }
+    
+    hist.printStats();
+    hist.printPercentiles();
+    hist.printHistogram();
+}
+```
+
 ---
 
 ## 關鍵要點總結

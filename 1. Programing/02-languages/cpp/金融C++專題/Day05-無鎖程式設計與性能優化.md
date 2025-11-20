@@ -1113,6 +1113,388 @@ int main() {
 }
 ```
 
+### 練習 5: MPMC 無鎖佇列實作
+
+**任務:** 實作多生產者多消費者 (MPMC) 無鎖佇列。
+
+**提示:**
+- 使用兩個原子索引 (head, tail)
+- 每個 slot 需要額外的狀態標記
+- 處理多執行緒競爭
+
+```cpp
+#include <atomic>
+#include <array>
+
+template<typename T, size_t Capacity>
+class MPMCQueue {
+    static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
+    
+    struct Slot {
+        std::atomic<size_t> turn;
+        T data;
+    };
+    
+    std::array<Slot, Capacity> buffer_;
+    alignas(64) std::atomic<size_t> head_{0};
+    alignas(64) std::atomic<size_t> tail_{0};
+    
+public:
+    MPMCQueue() {
+        for (size_t i = 0; i < Capacity; ++i) {
+            buffer_[i].turn.store(i, std::memory_order_relaxed);
+        }
+    }
+    
+    bool push(const T& value) {
+        size_t tail = tail_.load(std::memory_order_relaxed);
+        
+        while (true) {
+            Slot& slot = buffer_[tail & (Capacity - 1)];
+            size_t turn = slot.turn.load(std::memory_order_acquire);
+            intptr_t diff = static_cast<intptr_t>(turn) - static_cast<intptr_t>(tail);
+            
+            if (diff == 0) {
+                // Slot is ready for writing
+                if (tail_.compare_exchange_weak(tail, tail + 1, 
+                                                 std::memory_order_relaxed)) {
+                    slot.data = value;
+                    slot.turn.store(tail + 1, std::memory_order_release);
+                    return true;
+                }
+            } else if (diff < 0) {
+                // Queue is full
+                return false;
+            } else {
+                // Lost race, retry
+                tail = tail_.load(std::memory_order_relaxed);
+            }
+        }
+    }
+    
+    bool pop(T& value) {
+        size_t head = head_.load(std::memory_order_relaxed);
+        
+        while (true) {
+            Slot& slot = buffer_[head & (Capacity - 1)];
+            size_t turn = slot.turn.load(std::memory_order_acquire);
+            intptr_t diff = static_cast<intptr_t>(turn) - static_cast<intptr_t>(head + 1);
+            
+            if (diff == 0) {
+                // Slot has data
+                if (head_.compare_exchange_weak(head, head + 1,
+                                                 std::memory_order_relaxed)) {
+                    value = slot.data;
+                    slot.turn.store(head + Capacity, std::memory_order_release);
+                    return true;
+                }
+            } else if (diff < 0) {
+                // Queue is empty
+                return false;
+            } else {
+                // Lost race, retry
+                head = head_.load(std::memory_order_relaxed);
+            }
+        }
+    }
+};
+
+// 測試程式
+int main() {
+    MPMCQueue<int, 1024> queue;
+    constexpr int N = 100000;
+    constexpr int NUM_PRODUCERS = 4;
+    constexpr int NUM_CONSUMERS = 4;
+    
+    std::atomic<int> produced{0};
+    std::atomic<int> consumed{0};
+    
+    // 生產者
+    std::vector<std::thread> producers;
+    for (int p = 0; p < NUM_PRODUCERS; ++p) {
+        producers.emplace_back([&] {
+            for (int i = 0; i < N / NUM_PRODUCERS; ++i) {
+                while (!queue.push(i)) {
+                    std::this_thread::yield();
+                }
+                produced.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+    }
+    
+    // 消費者
+    std::vector<std::thread> consumers;
+    for (int c = 0; c < NUM_CONSUMERS; ++c) {
+        consumers.emplace_back([&] {
+            int value;
+            while (consumed.load(std::memory_order_relaxed) < N) {
+                if (queue.pop(value)) {
+                    consumed.fetch_add(1, std::memory_order_relaxed);
+                }
+            }
+        });
+    }
+    
+    for (auto& t : producers) t.join();
+    for (auto& t : consumers) t.join();
+    
+    std::cout << "Produced: " << produced << ", Consumed: " << consumed << "\n";
+}
+```
+
+### 練習 6: Memory Order 實戰驗證
+
+**任務:** 驗證不同 memory order 的正確性與性能差異。
+
+```cpp
+#include <atomic>
+#include <thread>
+#include <cassert>
+#include <chrono>
+#include <iostream>
+
+// 測試 1: Relaxed 用於計數器
+void test_relaxed_counter() {
+    std::atomic<int> counter{0};
+    constexpr int N = 10000000;
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::thread t1([&] {
+        for (int i = 0; i < N; ++i) {
+            counter.fetch_add(1, std::memory_order_relaxed);
+        }
+    });
+    
+    std::thread t2([&] {
+        for (int i = 0; i < N; ++i) {
+            counter.fetch_add(1, std::memory_order_relaxed);
+        }
+    });
+    
+    t1.join();
+    t2.join();
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+    assert(counter == 2 * N);
+    std::cout << "Relaxed counter: " << duration.count() << " ms\n";
+}
+
+// 測試 2: Acquire-Release 同步
+void test_acquire_release() {
+    std::atomic<bool> ready{false};
+    int data = 0;
+    
+    std::thread producer([&] {
+        data = 42;
+        ready.store(true, std::memory_order_release);
+    });
+    
+    std::thread consumer([&] {
+        while (!ready.load(std::memory_order_acquire)) {
+            // spin
+        }
+        assert(data == 42);  // 保證看到 data = 42
+    });
+    
+    producer.join();
+    consumer.join();
+    std::cout << "Acquire-Release: PASSED\n";
+}
+
+// 測試 3: Sequential Consistency 驗證
+void test_seq_cst() {
+    std::atomic<int> x{0}, y{0};
+    int r1 = 0, r2 = 0;
+    
+    std::thread t1([&] {
+        x.store(1, std::memory_order_seq_cst);
+        r1 = y.load(std::memory_order_seq_cst);
+    });
+    
+    std::thread t2([&] {
+        y.store(1, std::memory_order_seq_cst);
+        r2 = x.load(std::memory_order_seq_cst);
+    });
+    
+    t1.join();
+    t2.join();
+    
+    // seq_cst 保證不會出現 r1 == 0 && r2 == 0
+    assert(!(r1 == 0 && r2 == 0));
+    std::cout << "Seq_cst: r1=" << r1 << ", r2=" << r2 << " PASSED\n";
+}
+
+// 測試 4: 性能對比
+void benchmark_memory_orders() {
+    constexpr int N = 10000000;
+    std::atomic<int> counter{0};
+    
+    // Relaxed
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < N; ++i) {
+        counter.fetch_add(1, std::memory_order_relaxed);
+    }
+    auto t1 = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start).count();
+    
+    // Seq_cst
+    counter = 0;
+    start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < N; ++i) {
+        counter.fetch_add(1, std::memory_order_seq_cst);
+    }
+    auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start).count();
+    
+    std::cout << "Relaxed: " << t1 << " ms, Seq_cst: " << t2 << " ms\n";
+    std::cout << "Seq_cst overhead: " << (t2 - t1) * 100.0 / t1 << "%\n";
+}
+
+int main() {
+    test_relaxed_counter();
+    test_acquire_release();
+    test_seq_cst();
+    benchmark_memory_orders();
+}
+```
+
+### 練習 7: 無鎖哈希表 (Lock-Free Hash Map)
+
+**任務:** 實作支持並發讀寫的無鎖哈希表。
+
+**提示:**
+- 使用開放定址法 (Open Addressing)
+- key 和 value 使用原子操作
+- 處理 tombstone (刪除標記)
+
+```cpp
+#include <atomic>
+#include <array>
+#include <functional>
+
+template<typename K, typename V, size_t Capacity>
+class LockFreeHashMap {
+    static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
+    
+    struct Entry {
+        std::atomic<K> key;
+        std::atomic<V> value;
+        
+        Entry() : key(0), value(0) {}
+    };
+    
+    std::array<Entry, Capacity> table_;
+    static constexpr K EMPTY = 0;
+    static constexpr K TOMBSTONE = ~K(0);
+    
+    size_t hash(K key) const {
+        return std::hash<K>{}(key) & (Capacity - 1);
+    }
+    
+public:
+    bool insert(K key, V value) {
+        if (key == EMPTY || key == TOMBSTONE) return false;
+        
+        size_t idx = hash(key);
+        
+        for (size_t i = 0; i < Capacity; ++i) {
+            size_t probe = (idx + i) & (Capacity - 1);
+            K expected = EMPTY;
+            
+            if (table_[probe].key.compare_exchange_strong(
+                expected, key, std::memory_order_acq_rel)) {
+                // 成功插入 key,現在設置 value
+                table_[probe].value.store(value, std::memory_order_release);
+                return true;
+            }
+            
+            if (expected == key) {
+                // Key 已存在,更新 value
+                table_[probe].value.store(value, std::memory_order_release);
+                return true;
+            }
+            
+            // 繼續探測
+        }
+        
+        return false;  // Table full
+    }
+    
+    bool find(K key, V& value) const {
+        if (key == EMPTY || key == TOMBSTONE) return false;
+        
+        size_t idx = hash(key);
+        
+        for (size_t i = 0; i < Capacity; ++i) {
+            size_t probe = (idx + i) & (Capacity - 1);
+            K k = table_[probe].key.load(std::memory_order_acquire);
+            
+            if (k == key) {
+                value = table_[probe].value.load(std::memory_order_acquire);
+                return true;
+            }
+            
+            if (k == EMPTY) {
+                return false;  // 未找到
+            }
+            
+            // 繼續探測 (跳過 TOMBSTONE)
+        }
+        
+        return false;
+    }
+    
+    bool remove(K key) {
+        if (key == EMPTY || key == TOMBSTONE) return false;
+        
+        size_t idx = hash(key);
+        
+        for (size_t i = 0; i < Capacity; ++i) {
+            size_t probe = (idx + i) & (Capacity - 1);
+            K expected = key;
+            
+            if (table_[probe].key.compare_exchange_strong(
+                expected, TOMBSTONE, std::memory_order_acq_rel)) {
+                return true;  // 成功刪除
+            }
+            
+            if (expected == EMPTY) {
+                return false;  // 未找到
+            }
+        }
+        
+        return false;
+    }
+};
+
+// 測試
+int main() {
+    LockFreeHashMap<uint64_t, uint64_t, 1024> map;
+    
+    // 多執行緒測試
+    std::vector<std::thread> threads;
+    
+    for (int t = 0; t < 4; ++t) {
+        threads.emplace_back([&, t] {
+            for (int i = 0; i < 100; ++i) {
+                uint64_t key = t * 1000 + i + 1;
+                map.insert(key, key * 2);
+                
+                uint64_t value;
+                if (map.find(key, value)) {
+                    assert(value == key * 2);
+                }
+            }
+        });
+    }
+    
+    for (auto& t : threads) t.join();
+    std::cout << "Lock-free hash map test passed\n";
+}
+```
 
 ---
 

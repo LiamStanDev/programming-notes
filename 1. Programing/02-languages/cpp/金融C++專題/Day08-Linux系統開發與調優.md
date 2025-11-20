@@ -1149,6 +1149,380 @@ int main() {
 }
 ```
 
+### 練習 4: Huge Pages 性能測試
+
+**需求:** 對比普通頁面與 Huge Pages 的 TLB miss 率和性能。
+
+```cpp
+#include <sys/mman.h>
+#include <chrono>
+#include <iostream>
+#include <cstring>
+#include <random>
+
+class HugePagesTest {
+    static constexpr size_t SIZE = 1024 * 1024 * 512;  // 512MB
+    
+    // 分配普通頁面
+    void* allocNormal() {
+        void* ptr = mmap(nullptr, SIZE, PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (ptr == MAP_FAILED) return nullptr;
+        return ptr;
+    }
+    
+    // 分配大頁
+    void* allocHugePages() {
+        void* ptr = mmap(nullptr, SIZE, PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
+        if (ptr == MAP_FAILED) {
+            perror("MAP_HUGETLB failed");
+            return nullptr;
+        }
+        return ptr;
+    }
+    
+    // 隨機訪問測試
+    double randomAccessTest(void* ptr, int iterations) {
+        char* data = static_cast<char*>(ptr);
+        std::mt19937_64 rng(42);
+        std::uniform_int_distribution<size_t> dist(0, SIZE - 1);
+        
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        volatile char sum = 0;
+        for (int i = 0; i < iterations; ++i) {
+            size_t offset = dist(rng);
+            sum += data[offset];
+        }
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration<double, std::milli>(end - start).count();
+    }
+    
+public:
+    void run() {
+        const int ITERATIONS = 10000000;
+        
+        // 測試普通頁面
+        std::cout << "Testing normal pages...\n";
+        void* normal = allocNormal();
+        if (normal) {
+            std::memset(normal, 0, SIZE);
+            double t1 = randomAccessTest(normal, ITERATIONS);
+            std::cout << "Normal pages: " << t1 << " ms\n";
+            munmap(normal, SIZE);
+        }
+        
+        // 測試大頁
+        std::cout << "Testing huge pages...\n";
+        void* huge = allocHugePages();
+        if (huge) {
+            std::memset(huge, 0, SIZE);
+            double t2 = randomAccessTest(huge, ITERATIONS);
+            std::cout << "Huge pages: " << t2 << " ms\n";
+            
+            if (normal) {
+                std::cout << "Speedup: " << (t1 / t2) << "x\n";
+            }
+            munmap(huge, SIZE);
+        }
+    }
+};
+
+// 使用 perf 測量 TLB miss
+// perf stat -e dTLB-load-misses,dTLB-loads ./hugepages_test
+
+int main() {
+    HugePagesTest test;
+    test.run();
+}
+```
+
+### 練習 5: NUMA 感知內存分配器
+
+**需求:** 實作 NUMA 感知的內存分配器,確保內存分配在本地 NUMA 節點。
+
+```cpp
+#include <numa.h>
+#include <numaif.h>
+#include <iostream>
+#include <vector>
+#include <chrono>
+#include <thread>
+
+class NUMAAllocator {
+    int node_;
+    
+public:
+    explicit NUMAAllocator(int node = -1) {
+        if (node < 0) {
+            // 使用當前執行緒所在的 NUMA 節點
+            int cpu = sched_getcpu();
+            node_ = numa_node_of_cpu(cpu);
+        } else {
+            node_ = node;
+        }
+    }
+    
+    void* allocate(size_t size) {
+        void* ptr = numa_alloc_onnode(size, node_);
+        if (!ptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+    
+    void deallocate(void* ptr, size_t size) {
+        numa_free(ptr, size);
+    }
+    
+    int getNode() const { return node_; }
+    
+    // 獲取內存所在的 NUMA 節點
+    static int getMemoryNode(void* ptr) {
+        int status;
+        int ret = move_pages(0, 1, &ptr, nullptr, &status, 0);
+        if (ret == 0) {
+            return status;
+        }
+        return -1;
+    }
+};
+
+// 性能測試
+void testNUMAPerformance() {
+    if (numa_available() == -1) {
+        std::cout << "NUMA not available\n";
+        return;
+    }
+    
+    int numNodes = numa_num_configured_nodes();
+    std::cout << "NUMA nodes: " << numNodes << "\n";
+    
+    constexpr size_t SIZE = 256 * 1024 * 1024;  // 256MB
+    constexpr int ITERATIONS = 10;
+    
+    for (int node = 0; node < numNodes; ++node) {
+        // 將執行緒綁定到特定 NUMA 節點
+        struct bitmask* cpumask = numa_allocate_cpumask();
+        numa_node_to_cpus(node, cpumask);
+        int cpu = -1;
+        for (int i = 0; i < numa_num_configured_cpus(); ++i) {
+            if (numa_bitmask_isbitset(cpumask, i)) {
+                cpu = i;
+                break;
+            }
+        }
+        numa_free_cpumask(cpumask);
+        
+        if (cpu >= 0) {
+            cpu_set_t cpuset;
+            CPU_ZERO(&cpuset);
+            CPU_SET(cpu, &cpuset);
+            pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
+        }
+        
+        std::cout << "\nThread on NUMA node " << node << ":\n";
+        
+        // 測試本地內存訪問
+        NUMAAllocator localAlloc(node);
+        char* localMem = static_cast<char*>(localAlloc.allocate(SIZE));
+        
+        auto start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < ITERATIONS; ++i) {
+            std::memset(localMem, i, SIZE);
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        double localTime = std::chrono::duration<double, std::milli>(
+            end - start).count();
+        
+        std::cout << "  Local memory access: " << localTime << " ms\n";
+        
+        // 測試遠程內存訪問
+        int remoteNode = (node + 1) % numNodes;
+        NUMAAllocator remoteAlloc(remoteNode);
+        char* remoteMem = static_cast<char*>(remoteAlloc.allocate(SIZE));
+        
+        start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < ITERATIONS; ++i) {
+            std::memset(remoteMem, i, SIZE);
+        }
+        end = std::chrono::high_resolution_clock::now();
+        double remoteTime = std::chrono::duration<double, std::milli>(
+            end - start).count();
+        
+        std::cout << "  Remote memory access: " << remoteTime << " ms\n";
+        std::cout << "  Remote/Local ratio: " << (remoteTime / localTime) << "x\n";
+        
+        localAlloc.deallocate(localMem, SIZE);
+        remoteAlloc.deallocate(remoteMem, SIZE);
+    }
+}
+
+int main() {
+    testNUMAPerformance();
+}
+```
+
+### 練習 6: 性能計數器監控工具
+
+**需求:** 使用 perf_event 實作程式內性能監控。
+
+```cpp
+#include <linux/perf_event.h>
+#include <linux/hw_breakpoint.h>
+#include <sys/syscall.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <cstring>
+#include <iostream>
+#include <array>
+#include <vector>
+
+class PerfMonitor {
+    struct Counter {
+        const char* name;
+        uint32_t type;
+        uint64_t config;
+        int fd;
+    };
+    
+    std::vector<Counter> counters_;
+    bool running_ = false;
+    
+    static long perf_event_open(perf_event_attr* attr, pid_t pid, 
+                                 int cpu, int group_fd, unsigned long flags) {
+        return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
+    }
+    
+public:
+    PerfMonitor() {
+        // 常用計數器
+        addCounter("cycles", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES);
+        addCounter("instructions", PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS);
+        addCounter("cache-refs", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES);
+        addCounter("cache-misses", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES);
+        addCounter("branches", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS);
+        addCounter("branch-misses", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES);
+    }
+    
+    ~PerfMonitor() {
+        for (auto& counter : counters_) {
+            if (counter.fd >= 0) close(counter.fd);
+        }
+    }
+    
+    void addCounter(const char* name, uint32_t type, uint64_t config) {
+        perf_event_attr attr{};
+        attr.type = type;
+        attr.size = sizeof(attr);
+        attr.config = config;
+        attr.disabled = 1;
+        attr.exclude_kernel = 1;
+        attr.exclude_hv = 1;
+        
+        int fd = perf_event_open(&attr, 0, -1, -1, 0);
+        counters_.push_back({name, type, config, fd});
+        
+        if (fd < 0) {
+            std::cerr << "Failed to open counter: " << name << "\n";
+        }
+    }
+    
+    void start() {
+        for (auto& counter : counters_) {
+            if (counter.fd >= 0) {
+                ioctl(counter.fd, PERF_EVENT_IOC_RESET, 0);
+                ioctl(counter.fd, PERF_EVENT_IOC_ENABLE, 0);
+            }
+        }
+        running_ = true;
+    }
+    
+    void stop() {
+        for (auto& counter : counters_) {
+            if (counter.fd >= 0) {
+                ioctl(counter.fd, PERF_EVENT_IOC_DISABLE, 0);
+            }
+        }
+        running_ = false;
+    }
+    
+    void printStats() {
+        std::cout << "\nPerformance Counters:\n";
+        
+        uint64_t cycles = 0, instructions = 0;
+        uint64_t cacheRefs = 0, cacheMisses = 0;
+        
+        for (auto& counter : counters_) {
+            if (counter.fd < 0) continue;
+            
+            uint64_t count;
+            read(counter.fd, &count, sizeof(count));
+            
+            std::cout << "  " << counter.name << ": " << count << "\n";
+            
+            if (strcmp(counter.name, "cycles") == 0) cycles = count;
+            if (strcmp(counter.name, "instructions") == 0) instructions = count;
+            if (strcmp(counter.name, "cache-refs") == 0) cacheRefs = count;
+            if (strcmp(counter.name, "cache-misses") == 0) cacheMisses = count;
+        }
+        
+        // 計算派生指標
+        if (cycles > 0 && instructions > 0) {
+            double ipc = static_cast<double>(instructions) / cycles;
+            std::cout << "  IPC: " << ipc << "\n";
+        }
+        
+        if (cacheRefs > 0) {
+            double missRate = 100.0 * cacheMisses / cacheRefs;
+            std::cout << "  Cache miss rate: " << missRate << "%\n";
+        }
+    }
+};
+
+// 使用示例
+int main() {
+    PerfMonitor monitor;
+    
+    monitor.start();
+    
+    // 測試代碼
+    constexpr size_t SIZE = 10 * 1024 * 1024;
+    std::vector<int> data(SIZE);
+    
+    // 順序訪問 (cache-friendly)
+    for (size_t i = 0; i < SIZE; ++i) {
+        data[i] = i * 2;
+    }
+    
+    volatile long sum = 0;
+    for (size_t i = 0; i < SIZE; ++i) {
+        sum += data[i];
+    }
+    
+    monitor.stop();
+    
+    std::cout << "Sequential access:\n";
+    monitor.printStats();
+    
+    // 隨機訪問 (cache-unfriendly)
+    monitor.start();
+    
+    std::mt19937 rng(42);
+    for (int i = 0; i < SIZE; ++i) {
+        size_t idx = rng() % SIZE;
+        sum += data[idx];
+    }
+    
+    monitor.stop();
+    
+    std::cout << "\nRandom access:\n";
+    monitor.printStats();
+}
+```
+
 ---
 
 ## 關鍵要點總結
