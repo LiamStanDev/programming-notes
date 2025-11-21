@@ -15,44 +15,48 @@
 
 ## 已完成筆記
 
-**01-C++核心特性.md** (35KB)
+**01-C++核心特性.md**
 
 - 智能指針 (unique_ptr, shared_ptr, weak_ptr)
 - **6 個實戰練習**: LinkedList, BST, Graph, OrderBook, LRU Cache, 多態系統
 - 移動語義、Lambda 表達式、模板編程
 - C++17/20 新特性 (結構化綁定、Concepts、Ranges)
-- RAII、STL 容器與算法、第三方庫
+- RAII 與資源管理
 
-**02-並發與性能優化.md** (~25KB)
+**02-STL 容器與算法.md**
+
+- 常用容器 (vector, deque, map, unordered_map, priority_queue)
+- 常用算法 (sort, binary_search, partition)
+- LeetCode 實戰案例與時間複雜度分析
+- HFT 場景下的容器選擇指南
+
+**03-並發與性能優化.md**
 
 - 多線程基礎 (std::thread, thread_local)
 - 同步原語 (mutex, condition_variable)
 - 原子操作與內存序 (std::atomic, CAS)
 - 無鎖編程 (無鎖棧、SPSC 隊列)
 - 緩存優化 (False Sharing、預取)
-- 線程池、CPU 親和性、性能測量
+- 線程池、性能測量
 - **異步編程與協程** (std::async, C++20 Coroutines, 異步模式)
 
-**03-編譯與優化.md** (13KB)
+**04-編譯與優化.md**
 
 - 編譯流程 (預處理、編譯、彙編、鏈接)
 - 編譯器優化級別 (-O0 到 -O3/-Ofast)
 - CPU 特定優化 (-march=native, SIMD)
 - 鏈接時優化 (LTO)、性能引導優化 (PGO)
-- 內聯優化、編譯器內建函數
-- CMake 構建系統
+- 內聯優化、編譯器內建函數、CMake
 
-**04-網路編程.md** (23KB)
+**05-網路編程.md**
 
 - TCP 基礎 (客戶端、服務器、狀態轉換)
-- 非阻塞 I/O
-- I/O 多路復用 (select, poll, epoll)
+- 非阻塞 I/O、I/O 多路復用 (select, poll, epoll)
 - 零拷貝技術 (sendfile, mmap)
 - TCP 調優 (TCP_NODELAY, 緩衝區)
-- UDP 編程與組播
-- io_uring 進階、延遲優化
+- UDP 編程與組播、io_uring 進階
 
-**05-Linux 系統編程與調優.md** (16KB)
+**06-Linux 系統編程與調優.md**
 
 - 進程管理 (fork, exec, IPC)
 - 實時調度 (SCHED_FIFO, 優先級)
@@ -61,7 +65,7 @@
 - 性能監控 (perf, /proc, strace)
 - 系統調優 (中斷親和性、內核參數)
 
-**06-金融交易系統專題.md** (21KB)
+**07-金融交易系統專題.md**
 
 - FIX 協議 (消息解析、構建)
 - 市場數據處理 (Level 1/2, UDP 組播)
@@ -70,16 +74,16 @@
 - HFT 系統架構 (多線程設計)
 - 完整系統實現 (SPSC 隊列、數據結構)
 
-**07-常用庫與工具鏈.md** (30KB)
+**08-常用庫與工具鏈.md**
 
-- **序列化**: FlatBuffers ⭐⭐⭐⭐⭐, Protocol Buffers, JSON (nlohmann/json, simdjson)
+- **序列化**: FlatBuffers ⭐⭐⭐⭐⭐, Protocol Buffers, JSON
 - **網路**: Boost.Asio, ZeroMQ ⭐⭐⭐⭐⭐
-- **日誌**: spdlog ⭐⭐⭐⭐⭐ (異步日誌,百萬條/秒)
+- **日誌**: spdlog ⭐⭐⭐⭐⭐ (異步日誌)
 - **測試與基準**: Google Test, Google Benchmark
 - **數據結構**: Abseil (flat_hash_map)
 - **時間**: Howard Hinnant's date
 - **配置**: CLI11, yaml-cpp
-- **HFT 專用**: QuickFIX (FIX 協議)
+- **HFT 專用**: QuickFIX
 
 ## 特色亮點
 
@@ -119,22 +123,24 @@
 
 ### 第 8-10 天: 專家
 
-- 06-金融交易系統專題
-- 整合實戰項目
+- 06-Linux 系統編程與調優
+- 07-金融交易系統專題
+- 08-常用庫與工具鏈
 
 ## 原始文件映射
 
-| 新文件          | 原始來源                          | 大小 |
-| --------------- | --------------------------------- | ---- |
-| 01-C++ 核心特性 | Day01, Day02, STL 容器, 標準庫    | 45KB |
-| 02-並發與性能   | Day04, Day05 + **異步編程**       | 32KB |
-| 03-編譯與優化   | Day03                             | 13KB |
-| 04-網路編程     | Day06, Day07                      | 23KB |
-| 05-系統編程     | Day08                             | 16KB |
-| 06-金融交易系統 | Day09, Day10                      | 21KB |
-| 07-常用庫工具鏈 | **新增** (FlatBuffers, spdlog 等) | 30KB |
+| 新文件            | 原始來源                          | 備註              |
+| ----------------- | --------------------------------- | ----------------- |
+| 01-C++ 核心特性   | Day01, Day02                      | 移除冗餘 STL/Libs |
+| 02-STL 容器與算法 | **新增** (LeetCode 導向)          | 完整覆蓋 STL      |
+| 03-並發與性能     | Day04, Day05 + **異步編程**       | 移除冗餘系統調優  |
+| 04-編譯與優化     | Day03                             |                   |
+| 05-網路編程       | Day06, Day07                      |                   |
+| 06-Linux 系統編程 | Day08                             | 包含 CPU 親和性   |
+| 07-金融交易系統   | Day09, Day10                      |                   |
+| 08-常用庫工具鏈   | **新增** (FlatBuffers, spdlog 等) |                   |
 
-**總計**: **7 個主題筆記**,共 **180KB** 的高質量技術內容
+**總計**: **8 個主題筆記**, 內容更加完整且無冗餘
 
 ## 使用指南
 
