@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
+                "file": "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,7 +28,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "01-C++核心特性"
+              "title": "03-並發與性能優化"
             }
           }
         ]
@@ -193,19 +193,19 @@
   },
   "active": "5bf2a1d0992f421b",
   "lastOpenFiles": [
+    "1. Programing/02-languages/cpp/金融C++專題/02-STL容器與算法.md",
+    "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
     "1. Programing/02-languages/cpp/金融C++專題/08-常用庫與工具鏈.md",
     "1. Programing/02-languages/cpp/金融C++專題/07-金融交易系統專題.md",
     "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
     "1. Programing/02-languages/cpp/金融C++專題/05-網路編程.md",
     "1. Programing/02-languages/cpp/金融C++專題/04-編譯與優化.md",
     "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/02-STL容器與算法.md",
     "1. Programing/02-languages/cpp/金融C++專題/05-Linux系統編程與調優.md",
     "1. Programing/02-languages/cpp/金融C++專題/06-金融交易系統專題.md",
     "1. Programing/02-languages/cpp/金融C++專題/07-常用庫與工具鏈.md",
     "1. Programing/02-languages/cpp/金融C++專題/04-網路編程.md",
     "1. Programing/02-languages/cpp/金融C++專題/02-並發與性能優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/Day01-C++核心特性Part1.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/STL容器與算法完整指南.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp",
