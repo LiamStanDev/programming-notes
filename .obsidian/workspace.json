@@ -8,12 +8,12 @@
         "type": "tabs",
         "children": [
           {
-            "id": "5bf2a1d0992f421b",
+            "id": "ca4ad9bd8ba1ca91",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
+                "file": "1. Programing/03-web-development/backend/03-性能壓力測試工具.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,10 +28,59 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "03-並發與性能優化"
+              "title": "03-性能壓力測試工具"
+            }
+          },
+          {
+            "id": "f228e6990ede862c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/03-web-development/backend/07-編譯鏈接與二進位分析工具.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "07-編譯鏈接與二進位分析工具"
+            }
+          },
+          {
+            "id": "d4192ac9b8229b84",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/02-languages/cpp/01-核心語言特性/01-記憶體模型與所有權.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "01-記憶體模型與所有權"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -88,7 +137,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 276.5
+    "width": 333.5
   },
   "right": {
     "id": "8fc2f11236ffbd5f",
@@ -191,37 +240,37 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "5bf2a1d0992f421b",
+  "active": "f228e6990ede862c",
   "lastOpenFiles": [
+    "1. Programing/03-web-development/backend/06-進程除錯與追蹤工具.md",
+    "1. Programing/03-web-development/backend/05-網路診斷工具.md",
+    "1. Programing/03-web-development/backend/04-系統資源監控工具.md",
+    "1. Programing/03-web-development/backend/03-性能壓力測試工具.md",
+    "1. Programing/03-web-development/backend/02-網路連接工具.md",
+    "1. Programing/03-web-development/backend/01-HTTP與API測試工具.md",
+    "1. Programing/03-web-development/backend/00-概述.md",
+    "1. Programing/02-languages/cpp/金融C++專題/05-網路編程.md",
+    "1. Programing/03-web-development/backend/10-實戰場景.md",
+    "1. Programing/03-web-development/backend/09-資料處理工具.md",
+    "1. Programing/03-web-development/backend/08-日誌分析工具.md",
+    "1. Programing/03-web-development/backend/07-編譯鏈接與二進位分析工具.md",
+    "1. Programing/03-web-development/backend",
+    "1. Programing/-p",
+    "1. Programing/02-languages/cpp/金融C++專題/04-編譯與優化.md",
     "1. Programing/02-languages/cpp/金融C++專題/02-STL容器與算法.md",
-    "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
     "1. Programing/02-languages/cpp/金融C++專題/08-常用庫與工具鏈.md",
     "1. Programing/02-languages/cpp/金融C++專題/07-金融交易系統專題.md",
-    "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
-    "1. Programing/02-languages/cpp/金融C++專題/05-網路編程.md",
-    "1. Programing/02-languages/cpp/金融C++專題/04-編譯與優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/05-Linux系統編程與調優.md",
-    "1. Programing/02-languages/cpp/金融C++專題/06-金融交易系統專題.md",
-    "1. Programing/02-languages/cpp/金融C++專題/07-常用庫與工具鏈.md",
-    "1. Programing/02-languages/cpp/金融C++專題/04-網路編程.md",
-    "1. Programing/02-languages/cpp/金融C++專題/02-並發與性能優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day01-C++核心特性Part1.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/STL容器與算法完整指南.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp",
-    "1. Programing/02-languages/cpp/金融C++專題/03-編譯與優化.md",
     "1. Programing/02-languages/cpp/金融C++專題/README.md",
-    "1. Programing/02-languages/cpp/金融C++專題/new_ver",
+    "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
+    "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
+    "1. Programing/02-languages/cpp/金融C++專題/Day04-多線程編程與同步.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/標準庫與第三方庫指南.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day07-網路進階與極致優化.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day02-C++現代特性Part2.md",
-    "1. Programing/02-languages/rust/01-進階語言特性/00-Rust核心概念速查.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/TODO.md",
+    "1. Programing/02-languages/cpp/金融C++專題/bckp/STL容器與算法完整指南.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/Day10-整合實戰項目.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/Day09-金融交易系統專題.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp/Day08-Linux系統開發與調優.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day06-網路程式設計基礎.md",
-    "1. Programing/02-languages/cpp/金融C++專題",
+    "1. Programing/02-languages/cpp/金融C++專題/bckp",
     "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api",
     "1. Programing/02-languages/golang/學習筆記",
     "1. Programing/02-languages/golang/10天突破系列/附錄",
