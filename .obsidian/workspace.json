@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
+                "file": "1. Programing/01-fundamentals/algorithms/位運算大全.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "06-Linux系統編程與調優"
+              "title": "位運算大全"
             }
           },
           {
@@ -137,7 +137,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 333.5
+    "width": 256.5
   },
   "right": {
     "id": "8fc2f11236ffbd5f",
@@ -242,34 +242,34 @@
   },
   "active": "f228e6990ede862c",
   "lastOpenFiles": [
+    "1. Programing/02-languages/cpp/02-高性能編程/05-SIMD與向量化.md",
+    "1. Programing/02-languages/cpp/02-高性能編程/04-分支預測與CPU流水線.md",
+    "1. Programing/02-languages/cpp/02-高性能編程/03-記憶體對齊與Padding.md",
+    "1. Programing/02-languages/cpp/02-高性能編程/02-Cache友好的資料結構.md",
+    "1. Programing/02-languages/cpp/02-高性能編程/01-編譯器優化原理.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/03-執行緒同步機制.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/02-Lock-Free資料結構.md",
+    "1. Programing/02-languages/cpp/04-網路編程/02-epoll與io_uring詳解.md",
+    "1. Programing/02-languages/cpp/05-系統編程/05-Linux特定優化技術.md",
+    "1. Programing/02-languages/cpp/05-系統編程/04-信號處理與異常安全.md",
+    "1. Programing/02-languages/cpp/05-系統編程/03-CPU親和性與調度.md",
+    "1. Programing/02-languages/cpp/05-系統編程/02-進程間通信_IPC.md",
+    "1. Programing/02-languages/cpp/05-系統編程/01-系統調用與性能.md",
+    "1. Programing/01-fundamentals/algorithms/動態規劃系統化訓練.md",
+    "1. Programing/01-fundamentals/algorithms/位運算大全.md",
+    "1. Programing/02-languages/cpp/金融C++專題/README.md",
+    "1. Programing/02-languages/cpp/金融C++專題/08-常用庫與工具鏈.md",
+    "1. Programing/02-languages/cpp/金融C++專題/07-金融交易系統專題.md",
+    "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
     "1. Programing/02-languages/cpp/金融C++專題/05-網路編程.md",
     "1. Programing/02-languages/cpp/金融C++專題/04-編譯與優化.md",
     "1. Programing/02-languages/cpp/金融C++專題/03-並發與性能優化.md",
     "1. Programing/02-languages/cpp/金融C++專題/02-STL容器與算法.md",
     "1. Programing/02-languages/cpp/金融C++專題/01-C++核心特性.md",
-    "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
-    "1. Programing/02-languages/cpp/金融C++專題/07-金融交易系統專題.md",
-    "1. Programing/02-languages/cpp/金融C++專題/08-常用庫與工具鏈.md",
     "1. Programing/03-web-development/backend/07-編譯鏈接與二進位分析工具.md",
     "1. Programing/03-web-development/backend/06-進程除錯與追蹤工具.md",
-    "1. Programing/03-web-development/backend/05-網路診斷工具.md",
-    "1. Programing/03-web-development/backend/04-系統資源監控工具.md",
-    "1. Programing/03-web-development/backend/03-性能壓力測試工具.md",
-    "1. Programing/03-web-development/backend/02-網路連接工具.md",
-    "1. Programing/03-web-development/backend/01-HTTP與API測試工具.md",
-    "1. Programing/03-web-development/backend/00-概述.md",
-    "1. Programing/03-web-development/backend/10-實戰場景.md",
-    "1. Programing/03-web-development/backend/09-資料處理工具.md",
-    "1. Programing/03-web-development/backend/08-日誌分析工具.md",
     "1. Programing/03-web-development/backend",
     "1. Programing/-p",
-    "1. Programing/02-languages/cpp/金融C++專題/README.md",
-    "1. Programing/02-languages/cpp/金融C++專題/Day04-多線程編程與同步.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/標準庫與第三方庫指南.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/TODO.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/STL容器與算法完整指南.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day10-整合實戰項目.md",
-    "1. Programing/02-languages/cpp/金融C++專題/bckp/Day09-金融交易系統專題.md",
     "1. Programing/02-languages/cpp/金融C++專題/bckp",
     "1. Programing/02-languages/golang/10天突破系列/專案實踐/project-01-restful-api",
     "1. Programing/02-languages/golang/學習筆記",
