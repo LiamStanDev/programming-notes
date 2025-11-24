@@ -4,6 +4,6 @@
   "interfaceFontFamily": "Inter",
   "textFontFamily": "LXGW WenKai TC",
   "baseFontSize": 18,
-  "monospaceFontFamily": "Comic Mono,LXGW WenKai TC",
+  "monospaceFontFamily": "JetBrainsMono Nerd Font,LXGW WenKai TC",
   "theme": "obsidian"
 }
