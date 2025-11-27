@@ -61,7 +61,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/01-核心語言特性/01-記憶體模型與所有權.md",
+                "file": "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -76,11 +76,35 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "01-記憶體模型與所有權"
+              "title": "06-Linux系統編程與調優"
+            }
+          },
+          {
+            "id": "53c606dad7e48a28",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/02-languages/cpp/金融C++專題/09-異步編程專題.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "09-異步編程專題"
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -240,7 +264,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "f228e6990ede862c",
+  "active": "53c606dad7e48a28",
   "lastOpenFiles": [
     "1. Programing/02-languages/cpp_new/08-工具鏈與調試/03-性能分析工具.md",
     "1. Programing/02-languages/cpp_new/08-工具鏈與調試/01-CMake構建系統.md",
