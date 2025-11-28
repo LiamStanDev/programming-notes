@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp_new/08-工具鏈與調試/02-編譯器標誌與LTO_PGO.md",
+                "file": "1. Programing/02-languages/cpp_new/08-工具鏈與調試/01-CMake構建系統.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "02-編譯器標誌與LTO_PGO"
+              "title": "01-CMake構建系統"
             }
           },
           {
@@ -61,7 +61,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/金融C++專題/06-Linux系統編程與調優.md",
+                "file": "1. Programing/02-languages/cpp/01-核心語言特性/01-記憶體模型與所有權.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -76,35 +76,11 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "06-Linux系統編程與調優"
-            }
-          },
-          {
-            "id": "53c606dad7e48a28",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "1. Programing/02-languages/cpp_new/05-異步編程/07-異步性能評估與優化.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "07-異步性能評估與優化"
+              "title": "01-記憶體模型與所有權"
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -264,39 +240,39 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "53c606dad7e48a28",
+  "active": "f228e6990ede862c",
   "lastOpenFiles": [
-    "1. Programing/02-languages/cpp_new/06-網路編程/02-同步IO模型.md",
-    "1. Programing/02-languages/cpp_new/06-網路編程/01-TCP_UDP基礎.md",
-    "1. Programing/02-languages/cpp_new/06-網路編程",
+    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/05-基準測試與回歸測試.md",
+    "1. Programing/02-languages/cpp_new/IMPLEMENTATION.md",
+    "1. Programing/02-languages/cpp_new/03-併發與並行/04-任務並行_Intel_TBB.md",
+    "1. Programing/02-languages/cpp_new/03-併發與並行/02-原子操作與內存序.md",
+    "1. Programing/02-languages/cpp_new/03-併發與並行/01-多線程基礎與同步機制.md",
+    "1. Programing/02-languages/cpp_new/02-STL與標準庫/04-字符串與正則表達式.md",
+    "1. Programing/02-languages/cpp_new/02-STL與標準庫/03-自定義記憶體分配器.md",
+    "1. Programing/02-languages/cpp_new/02-STL與標準庫/01-容器性能特性.md",
+    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/04-記憶體與並發檢測.md",
+    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/02-編譯器標誌與優化.md",
+    "1. Programing/02-languages/cpp_new/06-網路編程/04-網路效能調校.md",
+    "1. Programing/02-languages/cpp_new/06-網路編程/03-零拷貝與內核旁路.md",
+    "1. Programing/02-languages/cpp_new/01-核心語言特性/01-類型系統與轉換.md",
+    "1. Programing/02-languages/cpp_new/01-核心語言特性/02-關鍵字與修飾符.md",
+    "1. Programing/02-languages/cpp_new/01-核心語言特性/03-記憶體模型與RAII.md",
+    "1. Programing/02-languages/cpp_new/01-核心語言特性/04-智能指針深度解析.md",
+    "1. Programing/02-languages/cpp_new/01-核心語言特性/00-未定義行為與陷阱.md",
+    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/02-編譯器標誌與LTO_PGO.md",
     "1. Programing/02-languages/cpp_new/07-系統編程/06-性能監控與系統調優.md",
     "1. Programing/02-languages/cpp_new/07-系統編程/05-信號處理與計時器.md",
     "1. Programing/02-languages/cpp_new/07-系統編程/04-內存管理與Huge_Pages.md",
     "1. Programing/02-languages/cpp_new/07-系統編程/03-CPU親和性與實時調度.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/05-異步數據庫操作.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/04-Asio深度剖析.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/03-自定義異步庫實現.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/02-異步IO深度解析.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/07-異步性能評估與優化.md",
-    "1. Programing/02-languages/cpp_new/07-系統編程/01-系統調用與文件IO.md",
-    "1. Programing/02-languages/cpp_new/04-高性能編程/05-性能測量與優化技巧.md",
-    "1. Programing/02-languages/cpp_new/04-高性能編程/04-SIMD與向量化.md",
-    "1. Programing/02-languages/cpp_new/04-高性能編程/03-分支預測與CPU流水線.md",
-    "1. Programing/02-languages/cpp_new/04-高性能編程/02-Cache友好與數據局部性.md",
-    "1. Programing/02-languages/cpp_new/04-高性能編程/01-編譯器優化原理.md",
     "1. Programing/02-languages/cpp_new/07-系統編程/02-進程管理與IPC.md",
-    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/03-性能分析工具.md",
-    "1. Programing/02-languages/cpp_new/IMPLEMENTATION.md",
+    "1. Programing/02-languages/cpp_new/07-系統編程/01-系統調用與文件IO.md",
     "1. Programing/02-languages/cpp_new/07-系統編程",
-    "1. Programing/-p",
-    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/02-編譯器標誌與LTO_PGO.md",
-    "1. Programing/02-languages/cpp_new/08-工具鏈與調試/01-CMake構建系統.md",
-    "1. Programing/02-languages/cpp_new/05-異步編程/06-HFT異步網路實戰.md",
-    "1. Programing/02-languages/cpp_new/01-核心語言特性/01-類型系統與轉換.md",
-    "1. Programing/02-languages/cpp_new/01-核心語言特性/00-未定義行為與陷阱.md",
-    "1. Programing/02-languages/cpp_new/02-STL與標準庫/02-算法與迭代器.md",
+    "1. Programing/02-languages/cpp_new/06-網路編程/02-同步IO模型.md",
+    "1. Programing/02-languages/cpp_new/06-網路編程/01-TCP_UDP基礎.md",
+    "1. Programing/02-languages/cpp_new/06-網路編程",
     "1. Programing/02-languages/cpp_new/05-異步編程",
     "1. Programing/02-languages/cpp_new/04-高性能編程",
+    "1. Programing/02-languages/cpp/金融C++專題/05-網路編程.md.backup",
     "1. Programing/02-languages/cpp_new/08-工具鏈與調試",
     "1. Programing/02-languages/cpp_new/03-併發與並行",
     "1. Programing/02-languages/cpp_new/02-STL與標準庫",
