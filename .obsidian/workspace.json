@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/04-高性能編程/05-性能測量與優化技巧.md",
+                "file": "1. Programing/08-interview/2-作業系統面試問題.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,31 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "05-性能測量與優化技巧"
+              "title": "2-作業系統面試問題"
+            }
+          },
+          {
+            "id": "f23f7fff3eee863d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/02-languages/cpp/bckp-20251129/bckp-20251114/compile 相關/01 - Compile in Detail.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "01 - Compile in Detail"
             }
           },
           {
@@ -136,7 +160,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "net.ipv4",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -161,7 +185,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 256.5
+    "width": 275.5
   },
   "right": {
     "id": "8fc2f11236ffbd5f",
@@ -266,34 +290,34 @@
   },
   "active": "f228e6990ede862c",
   "lastOpenFiles": [
-    "1. Programing/02-languages/cpp/11-數據結構/07-HFT特化結構.md",
-    "1. Programing/02-languages/cpp/11-數據結構/06-圖與高級結構.md",
-    "1. Programing/02-languages/cpp/11-數據結構/05-堆積與優先佇列.md",
-    "1. Programing/02-languages/cpp/11-數據結構/04-雜湊結構.md",
-    "1. Programing/02-languages/cpp/11-數據結構/03-平衡樹與紅黑樹.md",
-    "1. Programing/02-languages/cpp/11-數據結構/02-樹狀結構.md",
-    "1. Programing/02-languages/cpp/11-數據結構/01-線性結構.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/05-移動語義與完美轉發.md",
-    "1. Programing/02-languages/cpp/11-數據結構",
-    "1. Programing/02-languages/cpp/01-核心語言特性/02-關鍵字與修飾符.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/04-智能指針深度解析.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/03-記憶體模型與RAII.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/10-現代C++特性速覽.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/08-應避免的特性與反模式.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/07-Lambda與函數對象.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/01-類型系統與轉換.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/00-未定義行為與陷阱.md",
-    "1. Programing/02-languages/cpp/05-異步編程/03-自定義異步庫實現.md",
-    "1. Programing/02-languages/cpp/05-異步編程/04-Asio深度剖析.md",
-    "1. Programing/02-languages/cpp/05-異步編程/02-異步IO深度解析.md",
-    "1. Programing/AGENTS.md",
-    "1. Programing/02-languages/cpp/04-高性能編程/01-編譯器優化原理.md",
+    "1. Programing/08-interview/1-計算機網路面試問題.md",
+    "1. Programing/08-interview/2-作業系統面試問題.md",
+    "1. Programing/08-interview/3-C++面試問題.md",
+    "1. Programing/08-interview/0-行為面試問題.md",
+    "1. Programing/08-interview/Technical Interview 英文整理.md",
+    "1. Programing/08-interview/Introduction.md",
+    "1. Programing/08-interview/Computer Network.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/04-任務並行_Intel_TBB.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/03-無鎖編程實戰.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/02-原子操作與內存序.md",
+    "1. Programing/02-languages/cpp/03-併發與並行/01-多線程基礎與同步機制.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/04-字符串與正則表達式.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/03-自定義記憶體分配器.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/02-算法與迭代器.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/01-容器性能特性.md",
-    "1. Programing/02-languages/cpp/10-實戰模式",
+    "1. Programing/02-languages/cpp/01-核心語言特性/10-現代C++特性速覽.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/08-應避免的特性與反模式.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/07-Lambda與函數對象.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/06-模板元編程精要.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/01-類型系統與轉換.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/02-關鍵字與修飾符.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/03-記憶體模型與RAII.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/05-移動語義與完美轉發.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/04-智能指針深度解析.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/00-未定義行為與陷阱.md",
+    "1. Programing/02-languages/cpp/11-數據結構",
+    "1. Programing/02-languages/cpp/10-實戰案例",
     "1. Programing/02-languages/cpp/07-系統編程",
     "1. Programing/02-languages/cpp/06-網路編程",
     "1. Programing/02-languages/cpp/05-異步編程",

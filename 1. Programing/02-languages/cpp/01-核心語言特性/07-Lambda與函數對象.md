@@ -262,7 +262,7 @@ std::vector<int> vec = {5, 2, 8, 1, 9};
 
 // 排序
 std::sort(vec.begin(), vec.end(),
-    [](int a, int b) { return a < b; });
+    [](int a, int b) { return a > b; }); // 前一個要大於後一個
 
 // 查找
 auto it = std::find_if(vec.begin(), vec.end(),

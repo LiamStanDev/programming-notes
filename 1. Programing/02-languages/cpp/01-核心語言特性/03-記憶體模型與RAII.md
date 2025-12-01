@@ -157,8 +157,8 @@ struct Aligned {
     // 3 bytes padding
     int i;       // 4 bytes
     char c2;     // 1 byte
-    // 7 bytes padding (對齊至 8 的倍數)
-}; // sizeof = 16 bytes
+    // 3 bytes padding
+}; // sizeof = 12 bytes
 
 struct Optimized {
     int i;       // 4 bytes
@@ -302,12 +302,12 @@ manager.add_order(create_order()); // 移動 (臨時對象)
 
 ### 4.1 所有權模型對比
 
-| 指針類型          | 所有權            | 開銷     | 適用場景            |
-| ----------------- | ----------------- | -------- | ------------------- |
-| `std::unique_ptr` | 唯一所有權        | 零開銷   | 默認選擇,獨佔資源   |
-| `std::shared_ptr` | 共享所有權        | 原子計數 | 多個所有者,計數管理 |
-| `std::weak_ptr`   | 非所有權          | 無       | 打破循環引用        |
-| 原始指針 (`T*`)   | 借用 (non-owning) | 零開銷   | 觀察者,不負責釋放   |
+| 指針類型              | 所有權             | 開銷   | 適用場景       |
+| ----------------- | --------------- | ---- | ---------- |
+| `std::unique_ptr` | 唯一所有權           | 零開銷  | 默認選擇,獨佔資源  |
+| `std::shared_ptr` | 共享所有權           | 原子計數 | 多個所有者,計數管理 |
+| `std::weak_ptr`   | 非所有權            | 無    | 打破循環引用     |
+| 原始指針 (`T*`)       | 借用 (non-owning) | 零開銷  | 觀察者,不負責釋放  |
 
 ### 4.2 unique_ptr: 零開銷抽象
 
@@ -465,69 +465,83 @@ void take_ownership(std::unique_ptr<Widget> w);
 
 **概念**: 預先建立好多個物件(相同的),讓調用方取得然後使用完自動回收但不釋放(只還原狀態)
 
-**目的**: 避免頻繁分配/釋放
+**目的**: 避免頻繁分配/釋放，減少內存碎片化
 
 **場景**: 連線池、訂單物件池
 
 ```cpp
-template<typename T>
-class ObjectPool {
-    std::vector<std::unique_ptr<T>> pool_;
-    std::vector<T*> available_;
-
+template <typename T> class ObjectPool {
 public:
-    explicit ObjectPool(size_t initial_size) {
-        pool_.reserve(initial_size);
-        available_.reserve(initial_size);
+  ObjectPool(size_t initial_size) {
+    pool_.reserve(initial_size);
+    available_.reserve(initial_size);
 
-        for (size_t i = 0; i < initial_size; ++i) {
-            auto obj = std::make_unique<T>();
-            available_.push_back(obj.get());
-            pool_.push_back(std::move(obj));
-        }
+    for (size_t i = 0; i < initial_size; ++i) {
+      auto obj = std::make_unique<T>();
+      available_.push_back(obj.get());
+      pool_.push_back(std::move(obj));
+    }
+  }
+
+  T *aquire() {
+    if (available_.empty()) {
+      auto obj = std::make_unique<T>();
+      T *ptr = obj.get();
+      pool_.push_back(std::move(obj));
+      return ptr;
     }
 
-    T* acquire() {
-        if (available_.empty()) {
-            auto obj = std::make_unique<T>();
-            T* ptr = obj.get();
-            pool_.push_back(std::move(obj));
-            return ptr;
-        }
+    T *obj = available_.back();
+    available_.pop_back();
+    return obj;
+  }
 
-        T* obj = available_.back();
-        available_.pop_back();
-        return obj;
-    }
+  void release(T *obj) {
+    obj->reset();
+    available_.push_back(obj);
+  }
 
-    void release(T* obj) {
-        obj->reset();  // 重置狀態
-        available_.push_back(obj);
-    }
+private:
+  std::vector<std::unique_ptr<T>> pool_; // 持有 ownership
+  std::vector<T *> available_;           // Tracking
 };
 
-// 使用 RAII 管理物件生命週期
-template<typename T>
-class PooledObject {
-    T* obj_;
-    ObjectPool<T>* pool_;
-
+// Tracking Object
+// 物件池最大的問題就是使用完之後忘記歸還，所以在該物件離開作用域，自動的返還給物件池
+template <typename T> class PooledObject {
 public:
-    PooledObject(ObjectPool<T>& pool)
-        : obj_(pool.acquire()), pool_(&pool) {}
+  PooledObject(ObjectPool<T> &pool) : obj_(pool.aquire()), pool_(&pool) {}
 
-    ~PooledObject() {
-        if (obj_) pool_->release(obj_);
+  ~PooledObject() {
+    if (obj_)
+      pool_->release(obj_);
+  }
+
+  PooledObject(const PooledObject &) = delete;
+  PooledObject &operator=(const PooledObject &) = delete;
+
+  PooledObject(PooledObject &&other)
+      : obj_(std::exchange(other.obj_, nullptr)),
+        pool_(std::exchange(other.pool_, nullptr)) {}
+  PooledObject &operator=(PooledObject &&other) {
+    if (this != &other) {
+      if (obj_) {
+        pool_->release(obj_);
+      }
+
+      obj_ = std::exchange(other.obj_, nullptr);
+      pool_ = std::exchange(other.pool_, nullptr);
     }
 
-    PooledObject(PooledObject&&) = default;
-    PooledObject& operator=(PooledObject&&) = default;
+    return *this;
+  }
 
-    PooledObject(const PooledObject&) = delete;
-    PooledObject& operator=(const PooledObject&) = delete;
+  T *operator->() { return obj_; }
+  T &operator*() { return *obj_; }
 
-    T* operator->() { return obj_; }
-    T& operator*() { return *obj_; }
+private:
+  T *obj_;
+  ObjectPool<T> *pool_;
 };
 ```
 
