@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/08-interview/2-作業系統面試問題.md",
+                "file": "1. Programing/08-interview/1-計算機網路問題.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "2-作業系統面試問題"
+              "title": "1-計算機網路問題"
             }
           },
           {
@@ -290,8 +290,14 @@
   },
   "active": "f228e6990ede862c",
   "lastOpenFiles": [
-    "1. Programing/08-interview/1-計算機網路面試問題.md",
-    "1. Programing/08-interview/2-作業系統面試問題.md",
+    "1. Programing/08-interview/2-作業系統問題.md",
+    "1. Programing/08-interview/1-計算機網路問題.md",
+    "1. Programing/02-languages/cpp/11-數據結構/03-平衡樹與紅黑樹.md",
+    "1. Programing/02-languages/cpp/11-數據結構/01-線性結構.md",
+    "1. Programing/02-languages/cpp/10-實戰案例/04-FIX協議處理.md",
+    "1. Programing/02-languages/cpp/10-實戰案例/05-交易系統架構.md",
+    "1. Programing/02-languages/cpp/10-實戰案例/01-低延遲設計模式.md",
+    "1. Programing/02-languages/cpp/10-實戰案例/02-市場數據處理管線.md",
     "1. Programing/08-interview/3-C++面試問題.md",
     "1. Programing/08-interview/0-行為面試問題.md",
     "1. Programing/08-interview/Technical Interview 英文整理.md",
@@ -310,12 +316,6 @@
     "1. Programing/02-languages/cpp/01-核心語言特性/08-應避免的特性與反模式.md",
     "1. Programing/02-languages/cpp/01-核心語言特性/07-Lambda與函數對象.md",
     "1. Programing/02-languages/cpp/01-核心語言特性/06-模板元編程精要.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/01-類型系統與轉換.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/02-關鍵字與修飾符.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/03-記憶體模型與RAII.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/05-移動語義與完美轉發.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/04-智能指針深度解析.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/00-未定義行為與陷阱.md",
     "1. Programing/02-languages/cpp/11-數據結構",
     "1. Programing/02-languages/cpp/10-實戰案例",
     "1. Programing/02-languages/cpp/07-系統編程",
