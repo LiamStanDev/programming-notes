@@ -85,7 +85,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/bckp-20251129/bckp-20251114/compile 相關/01 - Compile in Detail.md",
+                "file": "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -100,7 +100,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "01 - Compile in Detail"
+              "title": "09-錯誤處理與異常安全"
             }
           },
           {
@@ -312,7 +312,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "f228e6990ede862c",
+  "active": "f23f7fff3eee863d",
   "lastOpenFiles": [
     "1. Programing/02-languages/cpp/06-網路編程/01-TCP_UDP基礎.md",
     "1. Programing/02-languages/cpp/07-系統編程/03-CPU親和性與實時調度.md",
