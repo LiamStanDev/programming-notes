@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
+                "file": "1. Programing/02-languages/cpp/05-異步編程/01-異步基礎與協程.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "02-進程管理與IPC"
+              "title": "01-異步基礎與協程"
             }
           },
           {
@@ -314,10 +314,12 @@
   },
   "active": "f228e6990ede862c",
   "lastOpenFiles": [
+    "1. Programing/02-languages/cpp/06-網路編程/01-TCP_UDP基礎.md",
+    "1. Programing/02-languages/cpp/07-系統編程/03-CPU親和性與實時調度.md",
     "1. Programing/02-languages/cpp/07-系統編程/01-系統調用與文件IO.md",
+    "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
     "1. Programing/05-linux/system/01-核心概念與架構.md",
     "1. Programing/05-linux/system/02-檔案系統管理.md",
-    "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
     "1. Programing/08-interview/1-計算機網路問題.md",
     "1. Programing/08-interview/3-C++面試問題.md",
     "1. Programing/08-interview/2-作業系統問題.md",
@@ -339,8 +341,6 @@
     "1. Programing/02-languages/cpp/03-併發與並行/01-多線程基礎與同步機制.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/04-字符串與正則表達式.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/03-自定義記憶體分配器.md",
-    "1. Programing/02-languages/cpp/02-STL與標準庫/02-算法與迭代器.md",
-    "1. Programing/02-languages/cpp/02-STL與標準庫/01-容器性能特性.md",
     "1. Programing/02-languages/cpp/11-數據結構",
     "1. Programing/02-languages/cpp/10-實戰案例",
     "1. Programing/02-languages/cpp/07-系統編程",

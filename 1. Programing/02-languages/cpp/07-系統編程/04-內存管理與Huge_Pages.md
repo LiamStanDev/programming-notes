@@ -96,27 +96,37 @@ cat /proc/<PID>/status | grep -i fault
 
 **⭐⭐⭐ mlock 系列函數**: 鎖定內存頁面,防止被交換到磁盤。
 
-**函數原型**:
+**函數簽名**:
 ```cpp
 #include <sys/mman.h>
 
-// 鎖定指定內存區域
 int mlock(const void *addr, size_t len);
-
-// 解鎖指定內存區域
 int munlock(const void *addr, size_t len);
-
-// 鎖定所有當前和未來的內存
 int mlockall(int flags);
-
-// 解鎖所有內存
 int munlockall(void);
 ```
 
-**mlockall 標誌**:
-- `MCL_CURRENT`: 鎖定當前已映射的所有頁面
-- `MCL_FUTURE`: 鎖定未來映射的所有頁面
-- `MCL_ONFAULT`: 僅在訪問時鎖定 (Linux 4.4+)
+**參數說明**:
+- `addr`: 內存區域起始地址 (建議頁對齊)
+- `len`: 要鎖定的字節數
+- `flags`: mlockall 標誌:
+  - `MCL_CURRENT`: 鎖定當前已映射的所有頁面
+  - `MCL_FUTURE`: 鎖定未來映射的所有頁面
+  - `MCL_ONFAULT`: 僅在訪問時鎖定 (Linux 4.4+,延遲鎖定)
+
+**返回值**:
+- 成功: 返回 0
+- 失敗: 返回 -1,並設置 `errno`
+
+**常見 errno**:
+- `ENOMEM`: 內存不足或超出鎖定限制 (ulimit -l)
+- `EPERM`: 權限不足 (需要 CAP_IPC_LOCK)
+- `EINVAL`: 無效參數
+
+**效果**:
+- 保證頁面駐留在 RAM 中,不會被 swap 到磁盤
+- 避免 Major Page Fault (從磁盤讀取頁面,延遲 1-10ms)
+- 對 HFT 系統至關重要
 
 ### 2.2 基本使用
 
@@ -570,6 +580,44 @@ graph TB
 - **HFT 影響**: 每次跨節點訪問增加 200 ns
 
 ### 4.2 NUMA 內存分配
+
+**函數簽名**:
+```cpp
+#include <numa.h>
+#include <numaif.h>
+
+// NUMA 系統查詢
+int numa_available(void);
+int numa_num_configured_nodes(void);
+int numa_node_of_cpu(int cpu);
+
+// NUMA 內存分配
+void *numa_alloc(size_t size);
+void *numa_alloc_onnode(size_t size, int node);
+void *numa_alloc_local(size_t size);
+void *numa_alloc_interleaved(size_t size);
+void numa_free(void *mem, size_t size);
+
+// NUMA 策略設置
+void numa_set_preferred(int node);
+void numa_bind(struct bitmask *nodemask);
+```
+
+**參數說明**:
+- `size`: 分配的字節數
+- `node`: NUMA 節點編號 (0-based)
+- `nodemask`: NUMA 節點掩碼
+
+**返回值**:
+- **numa_available**: -1 表示不支持 NUMA,0 表示支持
+- **內存分配函數**: 成功返回指標,失敗返回 NULL
+- **numa_num_configured_nodes**: 返回 NUMA 節點數量
+- **numa_node_of_cpu**: 返回指定 CPU 所屬的 NUMA 節點編號
+
+**分配策略**:
+- `numa_alloc_onnode`: 在指定節點分配 (本地訪問最快)
+- `numa_alloc_local`: 在當前線程運行的節點分配
+- `numa_alloc_interleaved`: 跨所有節點交錯分配 (負載均衡)
 
 **⭐⭐⭐ 核心 API** (需要 libnuma):
 

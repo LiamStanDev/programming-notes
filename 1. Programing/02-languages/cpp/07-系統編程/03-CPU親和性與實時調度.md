@@ -47,6 +47,33 @@ graph LR
 
 ### 1.2 設置 CPU 親和性
 
+**函數簽名**:
+```cpp
+#include <sched.h>
+
+int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
+int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
+int sched_getcpu(void);  // 獲取當前運行的 CPU 編號
+```
+
+**參數說明**:
+- `pid`: 進程/線程 ID (0 表示當前進程/線程)
+- `cpusetsize`: `cpu_set_t` 的大小,通常使用 `sizeof(cpu_set_t)`
+- `mask`: CPU 集合掩碼
+
+**返回值**:
+- 成功: 返回 0
+- 失敗: 返回 -1,並設置 `errno`
+- sched_getcpu: 返回 CPU 編號 (0-based),失敗返回 -1
+
+**cpu_set_t 操作巨集**:
+```cpp
+void CPU_ZERO(cpu_set_t *set);              // 清空集合
+void CPU_SET(int cpu, cpu_set_t *set);      // 添加 CPU
+void CPU_CLR(int cpu, cpu_set_t *set);      // 移除 CPU
+int CPU_ISSET(int cpu, cpu_set_t *set);     // 檢查 CPU 是否在集合中
+```
+
 **⭐⭐⭐ 方法 1: 使用 `sched_setaffinity`**
 
 ```cpp
@@ -623,6 +650,39 @@ graph TB
 ```
 
 ### 3.3 設置實時調度
+
+**函數簽名**:
+```cpp
+#include <sched.h>
+
+int sched_setscheduler(pid_t pid, int policy, const struct sched_param *param);
+int sched_getscheduler(pid_t pid);
+int sched_setparam(pid_t pid, const struct sched_param *param);
+int sched_getparam(pid_t pid, struct sched_param *param);
+```
+
+**參數說明**:
+- `pid`: 進程/線程 ID (0 表示當前進程/線程)
+- `policy`: 調度策略:
+  - `SCHED_OTHER`: 默認分時調度
+  - `SCHED_FIFO`: 先進先出實時調度
+  - `SCHED_RR`: 輪轉實時調度
+  - `SCHED_BATCH`: 批處理調度
+  - `SCHED_IDLE`: 空閑調度
+- `param`: 指向 `struct sched_param` 的指標
+
+**struct sched_param 結構**:
+```cpp
+struct sched_param {
+    int sched_priority;  // 優先級 (SCHED_FIFO/RR: 1-99, OTHER: 0)
+};
+```
+
+**返回值**:
+- sched_setscheduler/sched_setparam: 成功返回 0,失敗返回 -1
+- sched_getscheduler: 成功返回當前策略,失敗返回 -1
+
+**權限要求**: 需要 `CAP_SYS_NICE` capability 或 root 權限
 
 **⭐⭐⭐ 核心 API**
 

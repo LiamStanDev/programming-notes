@@ -22,6 +22,28 @@ graph LR
 
 ### 1.2 fork() - 建立子進程
 
+**函數簽名**:
+```cpp
+#include <unistd.h>
+
+pid_t fork(void);
+pid_t getpid(void);    // 獲取當前進程 PID
+pid_t getppid(void);   // 獲取父進程 PID
+```
+
+**參數說明**:
+- fork() 無參數
+
+**返回值 (fork)**:
+- **在父進程中**: 返回子進程的 PID (正整數)
+- **在子進程中**: 返回 0
+- **失敗**: 返回 -1,並設置 `errno`
+
+**fork() 的行為**:
+1. 創建當前進程的副本 (Copy-on-Write)
+2. 子進程獲得父進程的位址空間副本
+3. 父子進程各自獨立運行
+
 ```cpp
 #include <unistd.h>
 #include <sys/wait.h>
@@ -62,12 +84,73 @@ void fork_example() {
 }
 ```
 
+**wait() 函數簽名**:
+```cpp
+#include <sys/wait.h>
+
+pid_t wait(int *status);
+pid_t waitpid(pid_t pid, int *status, int options);
+```
+
+**參數說明 (wait)**:
+- `status`: 指向整數的指標,用於存儲子進程的退出狀態
+
+**返回值 (wait)**:
+- 成功: 返回已終止子進程的 PID
+- 失敗: 返回 -1 (如沒有子進程)
+
+**status 巨集**:
+- `WIFEXITED(status)`: 子進程正常終止返回 true
+- `WEXITSTATUS(status)`: 提取退出碼 (0-255)
+- `WIFSIGNALED(status)`: 被信號終止返回 true
+- `WTERMSIG(status)`: 提取導致終止的信號編號
+
 **fork() 特性**:
 - 子進程獲得父進程位址空間的**副本** (Copy-on-Write)
 - 繼承: 開啟的檔案描述符、環境變數、工作目錄等
 - 不繼承: PID、記憶體鎖、待處理信號等
 
 ### 1.3 exec() 系列 - 執行新程式
+
+**函數簽名**:
+```cpp
+#include <unistd.h>
+
+int execl(const char *path, const char *arg, ..., NULL);
+int execlp(const char *file, const char *arg, ..., NULL);
+int execle(const char *path, const char *arg, ..., NULL, char *const envp[]);
+
+int execv(const char *path, char *const argv[]);
+int execvp(const char *file, char *const argv[]);
+int execve(const char *path, char *const argv[], char *const envp[]);
+```
+
+**參數說明**:
+- `path`: 可執行文件的完整路徑
+- `file`: 可執行文件名稱 (在 PATH 中搜尋)
+- `arg, ...`: 參數列表 (必須以 NULL 結尾)
+- `argv[]`: 參數陣列 (argv[0] 通常是程序名)
+- `envp[]`: 環境變數陣列
+
+**函數名稱規則**:
+- `l` (list): 參數以列表形式傳遞
+- `v` (vector): 參數以陣列形式傳遞
+- `p` (path): 在 PATH 環境變數中搜尋
+- `e` (environment): 可指定環境變數
+
+**返回值**:
+- 成功: 不返回 (因為進程映像已被替換)
+- 失敗: 返回 -1,並設置 `errno`
+
+**常見 errno**:
+- `ENOENT`: 文件不存在
+- `EACCES`: 權限不足或不是可執行文件
+- `E2BIG`: 參數列表過長
+
+**exec() 效果**:
+- 替換當前進程的程式碼、數據、堆和棧
+- 保留: PID、PPID、打開的文件描述符 (除非設置 FD_CLOEXEC)
+- 不保留: 記憶體內容、信號處理器等
 
 ```cpp
 #include <unistd.h>
@@ -93,11 +176,15 @@ void exec_example() {
 }
 ```
 
-**exec() 系列函數**:
-- `execl()` - 列表傳遞參數
-- `execv()` - 陣列傳遞參數
-- `execle()` - 指定環境變數
-- `execvp()` - 在 PATH 中搜尋程式
+**exec() 系列函數對比**:
+| 函數 | 參數形式 | 搜尋 PATH | 自定義環境 | 使用場景 |
+|------|---------|-----------|-----------|---------|
+| `execl` | 列表 | 否 | 否 | 已知完整路徑,參數較少 |
+| `execlp` | 列表 | 是 | 否 | 在 PATH 中搜尋,參數較少 |
+| `execle` | 列表 | 否 | 是 | 需要自定義環境變數 |
+| `execv` | 陣列 | 否 | 否 | 參數較多或動態生成 |
+| `execvp` | 陣列 | 是 | 否 | 最常用,靈活 |
+| `execve` | 陣列 | 否 | 是 | 完全控制 (系統調用) |
 
 ---
 
@@ -155,6 +242,28 @@ ls /dev/mqueue/       # 查看訊息隊列
 ## 3. Pipe 與 FIFO ⭐
 
 ### 3.1 匿名 Pipe
+
+**函數簽名**:
+```cpp
+#include <unistd.h>
+
+int pipe(int pipefd[2]);
+```
+
+**參數說明**:
+- `pipefd`: 大小為 2 的整數陣列,用於存儲兩個文件描述符
+  - `pipefd[0]`: 讀取端 (read end)
+  - `pipefd[1]`: 寫入端 (write end)
+
+**返回值**:
+- 成功: 返回 0
+- 失敗: 返回 -1,並設置 `errno`
+
+**pipe 特性**:
+- 單向通信:數據只能從寫端流向讀端
+- 內核緩衝區:通常 64KB (可通過 /proc/sys/fs/pipe-max-size 查看)
+- 阻塞行為:讀端無數據時阻塞,寫端滿時阻塞
+- 關閉寫端:所有寫端關閉後,讀端讀到 EOF (返回 0)
 
 ```cpp
 #include <unistd.h>
@@ -230,6 +339,28 @@ void benchmark_pipe() {
 
 ### 3.2 命名 Pipe (FIFO)
 
+**函數簽名**:
+```cpp
+#include <sys/stat.h>
+
+int mkfifo(const char *pathname, mode_t mode);
+```
+
+**參數說明**:
+- `pathname`: FIFO 文件的路徑
+- `mode`: 權限位 (如 0666,會受 umask 影響)
+
+**返回值**:
+- 成功: 返回 0
+- 失敗: 返回 -1,並設置 `errno` (如 `EEXIST` 表示已存在)
+
+**FIFO 特性**:
+- 命名管道:有文件系統路徑,不相關的進程可以通信
+- 阻塞行為:
+  - open() for reading: 阻塞直到有寫入端打開
+  - open() for writing: 阻塞直到有讀取端打開
+- 可以使用 O_NONBLOCK 標誌避免阻塞
+
 ```cpp
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -274,6 +405,43 @@ void fifo_reader() {
 ## 4. Unix Domain Socket ⭐⭐
 
 ### 4.1 基礎用法
+
+**函數簽名**:
+```cpp
+#include <sys/socket.h>
+
+int socket(int domain, int type, int protocol);
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int listen(int sockfd, int backlog);
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+**參數說明**:
+- `domain`: 地址族:
+  - `AF_UNIX`/`AF_LOCAL`: Unix domain socket
+  - `AF_INET`: IPv4
+  - `AF_INET6`: IPv6
+- `type`: socket 類型:
+  - `SOCK_STREAM`: 面向連接 (類似 TCP)
+  - `SOCK_DGRAM`: 數據報 (類似 UDP)
+- `protocol`: 協議 (通常為 0,自動選擇)
+- `backlog`: 待處理連接隊列的最大長度
+
+**struct sockaddr_un 結構**:
+```cpp
+#include <sys/un.h>
+
+struct sockaddr_un {
+    sa_family_t sun_family;     // AF_UNIX
+    char sun_path[108];         // Socket 文件路徑
+};
+```
+
+**返回值**:
+- socket: 成功返回文件描述符,失敗返回 -1
+- bind/listen/connect: 成功返回 0,失敗返回 -1
+- accept: 成功返回新的連接 socket fd,失敗返回 -1
 
 ```cpp
 #include <sys/socket.h>
@@ -387,6 +555,44 @@ Unix SOCK_DGRAM:  ~8 μs 延遲 (少了連接管理)
 ## 5. 共享記憶體 - HFT 核心 ⭐⭐⭐
 
 ### 5.1 POSIX 共享記憶體
+
+**函數簽名**:
+```cpp
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+// 創建或打開共享記憶體對象
+int shm_open(const char *name, int oflag, mode_t mode);
+
+// 設置共享記憶體對象大小
+int ftruncate(int fd, off_t length);
+
+// 刪除共享記憶體對象
+int shm_unlink(const char *name);
+```
+
+**參數說明 (shm_open)**:
+- `name`: 共享記憶體對象名稱 (以 / 開頭,如 "/my_shm")
+- `oflag`: 標誌位:
+  - `O_CREAT`: 不存在則創建
+  - `O_EXCL`: 與 O_CREAT 一起使用,若已存在則失敗
+  - `O_RDONLY`: 唯讀
+  - `O_RDWR`: 讀寫
+- `mode`: 權限位 (如 0666)
+
+**返回值**:
+- **shm_open**: 成功返回文件描述符,失敗返回 -1
+- **ftruncate**: 成功返回 0,失敗返回 -1
+- **shm_unlink**: 成功返回 0,失敗返回 -1
+
+**使用流程**:
+1. shm_open() 創建/打開共享記憶體對象
+2. ftruncate() 設置大小
+3. mmap() 映射到進程位址空間
+4. 直接通過指標訪問共享記憶體
+5. munmap() 解除映射
+6. shm_unlink() 刪除對象
 
 ```mermaid
 graph LR
@@ -622,6 +828,34 @@ private:
 ### 5.4 進程間同步機制
 
 **方法 1: Futex (Fast Userspace Mutex)**
+
+**系統調用簽名**:
+```cpp
+#include <linux/futex.h>
+#include <sys/syscall.h>
+
+long syscall(SYS_futex, uint32_t *uaddr, int futex_op, uint32_t val,
+             const struct timespec *timeout, uint32_t *uaddr2, uint32_t val3);
+```
+
+**參數說明**:
+- `uaddr`: 指向 futex 變量的指標 (通常是 std::atomic<int>)
+- `futex_op`: 操作類型:
+  - `FUTEX_WAIT`: 如果 *uaddr == val,則休眠等待
+  - `FUTEX_WAKE`: 喚醒最多 val 個等待的線程
+  - `FUTEX_WAIT_PRIVATE`: 私有版本 (僅同一進程)
+  - `FUTEX_WAKE_PRIVATE`: 私有版本 (更快)
+- `val`: 操作參數 (依 op 而定)
+- `timeout`: 超時時間 (僅 FUTEX_WAIT)
+
+**返回值**:
+- FUTEX_WAIT: 成功返回 0,超時返回 -1 (errno=ETIMEDOUT)
+- FUTEX_WAKE: 返回被喚醒的線程數量
+
+**Futex 優勢**:
+- Fast path: 無競爭時完全在使用者空間 (atomic CAS)
+- Slow path: 有競爭時才進入內核休眠
+- 比 pthread_mutex 更輕量 (~30% 更快)
 
 ```cpp
 #include <linux/futex.h>
