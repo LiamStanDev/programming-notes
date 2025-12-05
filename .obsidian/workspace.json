@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/08-interview/1-計算機網路問題.md",
+                "file": "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -52,7 +52,31 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "1-計算機網路問題"
+              "title": "02-進程管理與IPC"
+            }
+          },
+          {
+            "id": "76c3093ccb9ef7d5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "1. Programing/05-linux/system/01-核心概念與架構.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "01-核心概念與架構"
             }
           },
           {
@@ -185,8 +209,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 275.5,
-    "collapsed": true
+    "width": 275.5
   },
   "right": {
     "id": "8fc2f11236ffbd5f",
@@ -291,9 +314,13 @@
   },
   "active": "f228e6990ede862c",
   "lastOpenFiles": [
+    "1. Programing/02-languages/cpp/07-系統編程/01-系統調用與文件IO.md",
+    "1. Programing/05-linux/system/01-核心概念與架構.md",
+    "1. Programing/05-linux/system/02-檔案系統管理.md",
+    "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
+    "1. Programing/08-interview/1-計算機網路問題.md",
     "1. Programing/08-interview/3-C++面試問題.md",
     "1. Programing/08-interview/2-作業系統問題.md",
-    "1. Programing/08-interview/1-計算機網路問題.md",
     "1. Programing/08-interview/sedH53AOK",
     "1. Programing/03-web-development/backend/03-性能壓力測試工具.md",
     "1. Programing/02-languages/cpp/11-數據結構/03-平衡樹與紅黑樹.md",
@@ -314,9 +341,6 @@
     "1. Programing/02-languages/cpp/02-STL與標準庫/03-自定義記憶體分配器.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/02-算法與迭代器.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/01-容器性能特性.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/10-現代C++特性速覽.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
-    "1. Programing/02-languages/cpp/01-核心語言特性/08-應避免的特性與反模式.md",
     "1. Programing/02-languages/cpp/11-數據結構",
     "1. Programing/02-languages/cpp/10-實戰案例",
     "1. Programing/02-languages/cpp/07-系統編程",
