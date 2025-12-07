@@ -1,3 +1,25 @@
-1. 閱讀：https://www.cnblogs.com/wzh2010/p/18031212
-2. gtk-rs: 學習 https://gtk-rs.org/gtk4-rs/stable/latest/book/
 
+## 🎯 目的與概述 (Purpose and Overview)
+
+本文件旨在提供專案的基本結構和格式化標準，以確保所有成員都能遵循一致的文檔風格。
+
+---
+
+
+
+
+## 🛠️ 技術規格 (Technical Specifications)
+
+### 1. 使用語言
+* 主要程式語言：Python 3.10+
+
+### 2. 格式化標準
+* **Python：** 遵循 PEP 8
+
+
+
+
+---
+
+**備註：**
+請確保所有程式碼註釋都使用英文，但文件內容可以使用中文。

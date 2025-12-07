@@ -32,60 +32,12 @@
             }
           },
           {
-            "id": "f228e6990ede862c",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "1. Programing/02-languages/cpp/05-異步編程/01-異步基礎與協程.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "01-異步基礎與協程"
-            }
-          },
-          {
-            "id": "76c3093ccb9ef7d5",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "1. Programing/05-linux/system/01-核心概念與架構.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "01-核心概念與架構"
-            }
-          },
-          {
             "id": "f23f7fff3eee863d",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
+                "file": "1. Programing/02-languages/cpp/03-併發與並行/02-原子操作與內存序.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -100,7 +52,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "09-錯誤處理與異常安全"
+              "title": "02-原子操作與內存序"
             }
           },
           {
@@ -314,23 +266,18 @@
   },
   "active": "f23f7fff3eee863d",
   "lastOpenFiles": [
-    "1. Programing/02-languages/cpp/06-網路編程/01-TCP_UDP基礎.md",
-    "1. Programing/02-languages/cpp/07-系統編程/03-CPU親和性與實時調度.md",
-    "1. Programing/02-languages/cpp/07-系統編程/01-系統調用與文件IO.md",
-    "1. Programing/02-languages/cpp/07-系統編程/02-進程管理與IPC.md",
-    "1. Programing/05-linux/system/01-核心概念與架構.md",
-    "1. Programing/05-linux/system/02-檔案系統管理.md",
+    "1. Programing/09-misc/Agents.md",
+    "1. Programing/06-ai-ml/教學用 AGENTS 設定.md",
+    "1. Programing/99-misc/TODO.md",
+    "1. Programing/09-misc/C++ LATS 項目開發學習紀錄.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/09-錯誤處理與異常安全.md",
     "1. Programing/08-interview/1-計算機網路問題.md",
-    "1. Programing/08-interview/3-C++面試問題.md",
+    "1. Programing/09-misc",
+    "1. Programing/02-languages/cpp/bckp-20251129/bckp-20251114/compile 相關/01 - Compile in Detail.md",
+    "1. Programing/08-interview/1-計算機網路面試問題.md",
     "1. Programing/08-interview/2-作業系統問題.md",
-    "1. Programing/08-interview/sedH53AOK",
-    "1. Programing/03-web-development/backend/03-性能壓力測試工具.md",
-    "1. Programing/02-languages/cpp/11-數據結構/03-平衡樹與紅黑樹.md",
-    "1. Programing/02-languages/cpp/11-數據結構/01-線性結構.md",
-    "1. Programing/02-languages/cpp/10-實戰案例/04-FIX協議處理.md",
-    "1. Programing/02-languages/cpp/10-實戰案例/05-交易系統架構.md",
-    "1. Programing/02-languages/cpp/10-實戰案例/01-低延遲設計模式.md",
-    "1. Programing/02-languages/cpp/10-實戰案例/02-市場數據處理管線.md",
+    "1. Programing/08-interview/2-作業系統面試問題.md",
+    "1. Programing/08-interview/3-C++面試問題.md",
     "1. Programing/08-interview/0-行為面試問題.md",
     "1. Programing/08-interview/Technical Interview 英文整理.md",
     "1. Programing/08-interview/Introduction.md",
@@ -341,6 +288,11 @@
     "1. Programing/02-languages/cpp/03-併發與並行/01-多線程基礎與同步機制.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/04-字符串與正則表達式.md",
     "1. Programing/02-languages/cpp/02-STL與標準庫/03-自定義記憶體分配器.md",
+    "1. Programing/02-languages/cpp/02-STL與標準庫/02-算法與迭代器.md",
+    "1. Programing/02-languages/cpp/02-STL與標準庫/01-容器性能特性.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/10-現代C++特性速覽.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/08-應避免的特性與反模式.md",
+    "1. Programing/02-languages/cpp/01-核心語言特性/07-Lambda與函數對象.md",
     "1. Programing/02-languages/cpp/11-數據結構",
     "1. Programing/02-languages/cpp/10-實戰案例",
     "1. Programing/02-languages/cpp/07-系統編程",
